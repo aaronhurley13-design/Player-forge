@@ -1,55 +1,83 @@
+import datetime
+import hashlib
+import math
 import random
+import pandas as pd
 import streamlit as st
 
 # ==========================================
-# PAGE CONFIGURATION & THEME
+# PAGE CONFIGURATION & CUSTOM STYLING
 # ==========================================
 st.set_page_config(
-    page_title="Player Forge | GOAT Builder",
+    page_title="Player Forge | Ultimate GOAT Builder",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for dark-mode sports card styling & animations
 st.markdown(
     """
     <style>
     .stApp {
-        background-color: #0b0f19;
+        background-color: #090d16;
         color: #f8fafc;
     }
-    .metric-card {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border: 1px solid #334155;
-        padding: 20px;
-        border-radius: 12px;
+    .spin-banner {
+        background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+        border: 2px solid #6366f1;
+        padding: 22px;
+        border-radius: 14px;
         text-align: center;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.25);
     }
     .slot-card {
-        background-color: #1e293b;
-        border: 2px dashed #475569;
+        background-color: #131c2e;
+        border: 2px dashed #334155;
         padding: 16px;
-        border-radius: 10px;
+        border-radius: 12px;
         text-align: center;
-        min-height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        min-height: 155px;
+        margin-bottom: 10px;
+        transition: all 0.2s ease-in-out;
     }
-    .slot-card.filled {
+    .slot-card.filled-elite {
+        border: 2px solid #eab308;
+        background: linear-gradient(135deg, #422006 0%, #131c2e 100%);
+    }
+    .slot-card.filled-good {
         border: 2px solid #3b82f6;
-        background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+        background: linear-gradient(135deg, #172554 0%, #131c2e 100%);
     }
-    .badge-safe {
-        background-color: #065f46;
-        color: #34d399;
-        padding: 2px 8px;
-        border-radius: 4px;
+    .slot-card.filled-trap {
+        border: 2px solid #ef4444;
+        background: linear-gradient(135deg, #450a0a 0%, #131c2e 100%);
+    }
+    .tier-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
         font-size: 11px;
-        font-weight: bold;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+    .pill-goat { background-color: #fef08a; color: #713f12; }
+    .pill-star { background-color: #bfdbfe; color: #1e3a8a; }
+    .pill-spec { background-color: #bbf7d0; color: #14532d; }
+    .pill-trap { background-color: #fecaca; color: #7f1d1d; }
+    .synergy-chip {
+        display: inline-block;
+        background-color: #064e3b;
+        border: 1px solid #10b981;
+        color: #ecfdf5;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-right: 8px;
+        margin-bottom: 8px;
     }
     </style>
 """,
@@ -58,547 +86,1582 @@ st.markdown(
 
 
 # ==========================================
-# DATABASE & ATHLETE POOLS (4 LEAGUES)
+# EXPANDED 100+ ATHLETE DATABASE (4 LEAGUES)
 # ==========================================
 LEAGUES_DATA = {
     "🏀 Pro Basketball": {
+        "icon": "🏀",
         "attributes": [
-            "Scoring / Inside",
-            "Shooting / Range",
-            "Playmaking / IQ",
+            "Inside Scoring",
+            "3PT & Shooting",
+            "Playmaking & IQ",
             "Perimeter Defense",
-            "Rebounding / Motor",
-            "Clutch / Takeover",
+            "Rebounding & Size",
+            "Clutch Gene",
         ],
+        "stat_labels": ["PPG", "RPG", "APG"],
         "athletes": [
             # GOATs & Superstars
             {
-                "name": "His Airness",
-                "safe": "The 23 Air",
+                "name": "Michael Jordan",
+                "safe": "His Airness #23",
                 "team": "CHI",
-                "vals": [99, 90, 93, 98, 88, 99],
+                "tier": "GOAT",
+                "hint": "6x Finals MVP, Scoring & Lockdown God",
+                "vals": [99, 88, 91, 99, 84, 99],
             },
             {
-                "name": "King James",
-                "safe": "The Akron Engine",
-                "team": "LA",
-                "vals": [98, 89, 99, 92, 94, 97],
-            },
-            {
-                "name": "Chef Curry",
-                "safe": "The 30 Sharpshooter",
-                "team": "GSW",
-                "vals": [92, 99, 95, 84, 76, 98],
-            },
-            {
-                "name": "The Joker",
-                "safe": "Sombor Maestro",
-                "team": "DEN",
-                "vals": [96, 93, 99, 83, 96, 95],
-            },
-            {
-                "name": "Wemby",
-                "safe": "The Alien Center",
-                "team": "SAS",
-                "vals": [90, 85, 82, 99, 98, 88],
-            },
-            {
-                "name": "Black Mamba",
-                "safe": "The 24 Legend",
+                "name": "LeBron James",
+                "safe": "The Akron King #23",
                 "team": "LAL",
-                "vals": [99, 91, 90, 95, 78, 99],
+                "tier": "GOAT",
+                "hint": "All-Time Scoring Leader & Complete Freight Train",
+                "vals": [99, 88, 99, 93, 92, 97],
             },
             {
-                "name": "The Diesel",
-                "safe": "Big Cactus",
-                "team": "ORL",
-                "vals": [99, 52, 75, 84, 99, 90],
+                "name": "Stephen Curry",
+                "safe": "The Golden Chef #30",
+                "team": "GSW",
+                "tier": "GOAT",
+                "hint": "Greatest Shooter Ever, Smaller Frame Inside",
+                "vals": [91, 99, 94, 82, 72, 98],
             },
             {
-                "name": "Greek Freak",
-                "safe": "The 34 Engine",
-                "team": "MIL",
-                "vals": [98, 70, 88, 95, 98, 92],
+                "name": "Nikola Jokić",
+                "safe": "The Sombor Joker #15",
+                "team": "DEN",
+                "tier": "GOAT",
+                "hint": "Point-Center Triple-Double Machine",
+                "vals": [97, 92, 99, 80, 97, 96],
             },
             {
-                "name": "The Beard",
-                "safe": "Stepback Maestro",
-                "team": "HOU",
-                "vals": [95, 94, 97, 78, 75, 88],
-            },
-            # Traps / Specialists
-            {
-                "name": "Kwame B.",
-                "safe": "Rookie Bust #1",
-                "team": "WAS",
-                "vals": [58, 42, 50, 62, 60, 45],
+                "name": "Kobe Bryant",
+                "safe": "Black Mamba #24",
+                "team": "LAL",
+                "tier": "GOAT",
+                "hint": "81-Point Assassin & Relentless Closer",
+                "vals": [98, 91, 89, 96, 80, 99],
             },
             {
-                "name": "White Mamba",
-                "safe": "Victory Cigar #1",
+                "name": "Kevin Durant",
+                "safe": "Slim Reaper #35",
+                "team": "PHX",
+                "tier": "GOAT",
+                "hint": "7-Foot 50/40/90 Walking Bucket",
+                "vals": [97, 98, 88, 89, 86, 97],
+            },
+            {
+                "name": "Larry Bird",
+                "safe": "The Hick from French Lick #33",
                 "team": "BOS",
-                "vals": [68, 78, 70, 60, 58, 72],
+                "tier": "GOAT",
+                "hint": "Trash-Talking Shooting & Passing Legend",
+                "vals": [94, 98, 97, 88, 92, 99],
+            },
+            {
+                "name": "Magic Johnson",
+                "safe": "Showtime General #32",
+                "team": "LAL",
+                "tier": "GOAT",
+                "hint": "6'9\" Point Guard Maestro",
+                "vals": [92, 84, 99, 85, 90, 96],
+            },
+            {
+                "name": "Tim Duncan",
+                "safe": "Big Fundamental #21",
+                "team": "SAS",
+                "tier": "GOAT",
+                "hint": "5-Ring Bank-Shot & Defensive Anchor",
+                "vals": [96, 76, 88, 94, 98, 96],
+            },
+            {
+                "name": "Luka Dončić",
+                "safe": "Luka Magic #77",
+                "team": "DAL",
+                "tier": "STAR",
+                "hint": "Offensive Heliocentric Genius, Slow Footwork on D",
+                "vals": [96, 94, 99, 74, 90, 97],
+            },
+            {
+                "name": "Shai Gilgeous-Alexander",
+                "safe": "Mid-Range Maestro #2",
+                "team": "OKC",
+                "tier": "STAR",
+                "hint": "Slithery Two-Way Scoring Guard",
+                "vals": [97, 89, 91, 93, 78, 95],
+            },
+            {
+                "name": "Anthony Edwards",
+                "safe": "Ant-Man Posterizer #5",
+                "team": "MIN",
+                "tier": "STAR",
+                "hint": "Explosive Rim Attacker & Two-Way Wing",
+                "vals": [96, 90, 86, 93, 82, 94],
+            },
+            {
+                "name": "Jayson Tatum",
+                "safe": "Boston Franchise Wing #0",
+                "team": "BOS",
+                "tier": "STAR",
+                "hint": "Well-Rounded Championship Two-Way Forward",
+                "vals": [93, 91, 89, 92, 89, 91],
+            },
+            {
+                "name": "Damian Lillard",
+                "safe": "Logo Dame Time #0",
+                "team": "MIL",
+                "tier": "STAR",
+                "hint": "40-Foot Buzzer-Beater Specialist, Weak Defense",
+                "vals": [91, 98, 92, 72, 70, 99],
+            },
+            {
+                "name": "Kyrie Irving",
+                "safe": "Uncle Drew Handles #11",
+                "team": "DAL",
+                "tier": "STAR",
+                "hint": "Unmatched Finishing & Game 7 Dagger",
+                "vals": [97, 95, 92, 78, 72, 98],
+            },
+            {
+                "name": "Kawhi Leonard",
+                "safe": "The Klaw #2",
+                "team": "LAC",
+                "tier": "STAR",
+                "hint": "Robotic Mid-Range & Lockdown Perimeter Thief",
+                "vals": [95, 92, 85, 99, 88, 96],
+            },
+            # High-Variance Specialists (Dangerous Traps in wrong slot!)
+            {
+                "name": "Shaquille O'Neal",
+                "safe": "The Big Diesel #34",
+                "team": "LAL",
+                "tier": "SPEC",
+                "hint": "99 Paint Dominance & Rebounding, 45 Shooting!",
+                "vals": [99, 45, 76, 80, 99, 90],
+            },
+            {
+                "name": "Giannis Antetokounmpo",
+                "safe": "The Greek Freak #34",
+                "team": "MIL",
+                "tier": "SPEC",
+                "hint": "Unstoppable Paint & Defense, Shaky Jumper",
+                "vals": [99, 68, 89, 96, 98, 93],
+            },
+            {
+                "name": "Victor Wembanyama",
+                "safe": "The 7-4 Alien #1",
+                "team": "SAS",
+                "tier": "SPEC",
+                "hint": "8-Foot Wingspan Defensive & Rebounding Phenom",
+                "vals": [92, 86, 84, 99, 98, 89],
+            },
+            {
+                "name": "Dennis Rodman",
+                "safe": "The Worm #91",
+                "team": "CHI",
+                "tier": "SPEC",
+                "hint": "99 Rebounding & Defense, Refuses to Shoot!",
+                "vals": [58, 42, 68, 99, 99, 82],
+            },
+            {
+                "name": "Rudy Gobert",
+                "safe": "The Stifle Tower #27",
+                "team": "MIN",
+                "tier": "SPEC",
+                "hint": "4x DPOY Rebounder, Zero Jumper",
+                "vals": [84, 35, 62, 88, 98, 65],
+            },
+            {
+                "name": "Kyle Korver",
+                "safe": "Catch & Shoot Sniper #26",
+                "team": "ATL",
+                "tier": "SPEC",
+                "hint": "98 Three-Point Laser, Limited Everywhere Else",
+                "vals": [72, 98, 74, 70, 65, 82],
+            },
+            {
+                "name": "Ben Simmons",
+                "safe": "Pass-First Point Forward #10",
+                "team": "PHI",
+                "tier": "SPEC",
+                "hint": "Elite Playmaking & Perimeter D, Allergic to Shooting!",
+                "vals": [80, 32, 92, 95, 88, 42],
+            },
+            # Full Bust Traps
+            {
+                "name": "Kwame Brown",
+                "safe": "Draft Bust #1",
+                "team": "WAS",
+                "tier": "TRAP",
+                "hint": "Small Hands & Butterfingers Under Pressure",
+                "vals": [62, 40, 50, 68, 72, 45],
+            },
+            {
+                "name": "Brian Scalabrine",
+                "safe": "The White Mamba #44",
+                "team": "BOS",
+                "tier": "TRAP",
+                "hint": "Human Victory Cigar & Bench Meme Legend",
+                "vals": [66, 78, 68, 62, 64, 75],
+            },
+            {
+                "name": "Smush Parker",
+                "safe": "Backcourt Bystander #1",
+                "team": "LAL",
+                "tier": "TRAP",
+                "hint": "Famous for Combining with Kobe for 94 Points",
+                "vals": [68, 70, 69, 60, 55, 52],
             },
         ],
     },
     "🏈 Pro Football": {
+        "icon": "🏈",
         "attributes": [
             "Passing Accuracy",
-            "Arm Strength",
-            "Rushing & Agility",
-            "Catching / Hands",
-            "Pass Protection / IQ",
-            "Clutch Drive Gen",
+            "Arm Strength & Deep Ball",
+            "Rushing & Elusiveness",
+            "Receiving & Hands",
+            "Football IQ & Defense",
+            "2-Minute Clutch Drive",
         ],
+        "stat_labels": ["Total Yds/Yr", "Total TDs/Yr", "All-Pro Honors"],
         "athletes": [
+            # GOATs & Superstars
             {
-                "name": "Tom Terrific",
-                "safe": "The 7-Ring Icon",
+                "name": "Tom Brady",
+                "safe": "The 7-Ring GOAT #12",
                 "team": "NE",
-                "vals": [97, 91, 72, 80, 98, 99],
+                "tier": "GOAT",
+                "hint": "99 IQ, Accuracy & Clutch, Statue in the Pocket",
+                "vals": [99, 92, 54, 65, 99, 99],
             },
             {
-                "name": "Mahomes Magic",
-                "safe": "No-Look Wizard",
+                "name": "Patrick Mahomes",
+                "safe": "Showtime Grim Reaper #15",
                 "team": "KC",
-                "vals": [96, 98, 92, 82, 94, 98],
+                "tier": "GOAT",
+                "hint": "No-Look Rocket Arm, Scrambling & OT Magic",
+                "vals": [97, 99, 91, 78, 96, 99],
             },
             {
-                "name": "Megatron",
-                "safe": "The 6-5 Deep Threat",
-                "team": "DET",
-                "vals": [85, 75, 88, 99, 70, 93],
+                "name": "Jerry Rice",
+                "safe": "The 80 Route God",
+                "team": "SF",
+                "tier": "GOAT",
+                "hint": "Untouchable Receiving Records & Stamina",
+                "vals": [75, 72, 92, 99, 98, 99],
             },
             {
-                "name": "The Minister of Defense",
-                "safe": "92 Edge Terror",
-                "team": "PHI",
-                "vals": [72, 60, 78, 85, 99, 95],
-            },
-            {
-                "name": "Lamar Action",
-                "safe": "Gridiron Sprinter",
-                "team": "BAL",
-                "vals": [90, 89, 99, 83, 85, 92],
-            },
-            {
-                "name": "Jettas",
-                "safe": "Griddy Receiver",
-                "team": "MIN",
-                "vals": [88, 70, 91, 98, 74, 94],
-            },
-            {
-                "name": "Peyton",
-                "safe": "The Sheriff 18",
+                "name": "Peyton Manning",
+                "safe": "The Omaha Sheriff #18",
                 "team": "IND",
-                "vals": [99, 94, 65, 82, 99, 96],
+                "tier": "GOAT",
+                "hint": "5x MVP Field General, Zero Mobility",
+                "vals": [99, 93, 52, 60, 99, 95],
             },
             {
-                "name": "The Assassin",
-                "safe": "Safety 20",
-                "team": "OAK",
-                "vals": [65, 55, 70, 75, 92, 98],
-            },
-            # Traps
-            {
-                "name": "JaMarcus",
-                "safe": "Purple Jam",
-                "team": "OAK",
-                "vals": [60, 99, 52, 65, 48, 50],
+                "name": "Lamar Jackson",
+                "safe": "Action Jackson #8",
+                "team": "BAL",
+                "tier": "STAR",
+                "hint": "99 Human Joystick Rushing & Deep Flick",
+                "vals": [91, 94, 99, 82, 91, 92],
             },
             {
-                "name": "Punt God",
-                "safe": "Eighty-Yard Boot",
+                "name": "Josh Allen",
+                "safe": "Buffalo Hurdle Tank #17",
                 "team": "BUF",
-                "vals": [50, 85, 60, 60, 70, 70],
+                "tier": "STAR",
+                "hint": "99 Howitzer Arm & Bulldozer Dual-Threat",
+                "vals": [91, 99, 95, 78, 89, 95],
+            },
+            {
+                "name": "Joe Burrow",
+                "safe": "Joe Shiesty #9",
+                "team": "CIN",
+                "tier": "STAR",
+                "hint": "Ice-Vein Pocket Surgeon & 4th Down Closer",
+                "vals": [97, 90, 82, 74, 96, 98],
+            },
+            {
+                "name": "Randy Moss",
+                "safe": "The Freak #84",
+                "team": "MIN",
+                "tier": "GOAT",
+                "hint": "'You Got Mossed!' 99 Deep Ball Hands & Speed",
+                "vals": [70, 82, 95, 99, 88, 94],
+            },
+            {
+                "name": "Calvin Johnson",
+                "safe": "Megatron #81",
+                "team": "DET",
+                "tier": "GOAT",
+                "hint": "Triple-Covered Jump Ball Monster",
+                "vals": [70, 78, 92, 99, 90, 95],
+            },
+            {
+                "name": "Justin Jefferson",
+                "safe": "Jettas Griddy King #18",
+                "team": "MIN",
+                "tier": "STAR",
+                "hint": "Acrobatic Route Technician & Elite Hands",
+                "vals": [75, 74, 93, 99, 92, 95],
+            },
+            {
+                "name": "Ja'Marr Chase",
+                "safe": "Always Open #1",
+                "team": "CIN",
+                "tier": "STAR",
+                "hint": "Explosive YAC & Deep Threat Receiver",
+                "vals": [72, 74, 95, 98, 90, 95],
+            },
+            {
+                "name": "Tyreek Hill",
+                "safe": "The Cheetah #10",
+                "team": "MIA",
+                "tier": "STAR",
+                "hint": "99 Track Speed & Deep Separation",
+                "vals": [70, 72, 99, 96, 86, 92],
+            },
+            {
+                "name": "Christian McCaffrey",
+                "safe": "Run CMC #23",
+                "team": "SF",
+                "tier": "STAR",
+                "hint": "1,000/1,000 Rushing & Receiving Swiss Army Knife",
+                "vals": [80, 76, 98, 96, 94, 94],
+            },
+            {
+                "name": "Barry Sanders",
+                "safe": "The Lion Ankle-Breaker #20",
+                "team": "DET",
+                "tier": "GOAT",
+                "hint": "Greatest Elusive Runner in Gridiron History",
+                "vals": [68, 65, 99, 88, 92, 93],
+            },
+            {
+                "name": "Derrick Henry",
+                "safe": "King Henry Tractorcito #22",
+                "team": "BAL",
+                "tier": "SPEC",
+                "hint": "98 Stiff-Arm Freight Train & Jump-Pass Threat",
+                "vals": [74, 76, 98, 78, 88, 92],
+            },
+            {
+                "name": "Saquon Barkley",
+                "safe": "Reverse Hurdle Phenom #26",
+                "team": "PHI",
+                "tier": "STAR",
+                "hint": "Home-Run Hitter with Elite Lower-Body Power",
+                "vals": [72, 72, 98, 90, 89, 93],
+            },
+            {
+                "name": "Travis Kelce",
+                "safe": "Big Yeti Tight End #87",
+                "team": "KC",
+                "tier": "STAR",
+                "hint": "Playoff Zone-Finder & Unstoppable Improviser",
+                "vals": [78, 76, 86, 98, 96, 98],
+            },
+            {
+                "name": "Rob Gronkowski",
+                "safe": "Gronk Spike #87",
+                "team": "NE",
+                "tier": "GOAT",
+                "hint": "Dominant Red-Zone & Blocking Tight End",
+                "vals": [70, 78, 89, 98, 94, 97],
+            },
+            {
+                "name": "Lawrence Taylor",
+                "safe": "L.T. #56",
+                "team": "NYG",
+                "tier": "GOAT",
+                "hint": "99 Defensive Terror Who Changed Pass Protection",
+                "vals": [55, 65, 90, 75, 99, 97],
+            },
+            {
+                "name": "Ed Reed",
+                "safe": "Ballhawk Safety #20",
+                "team": "BAL",
+                "tier": "GOAT",
+                "hint": "99 Defensive IQ, Interceptions & Return Threat",
+                "vals": [68, 72, 93, 94, 99, 96],
+            },
+            {
+                "name": "Deion Sanders",
+                "safe": "Prime Time #21",
+                "team": "DAL",
+                "tier": "GOAT",
+                "hint": "99 Lockdown Island, Speed & Two-Way Hands",
+                "vals": [70, 70, 99, 95, 99, 96],
+            },
+            {
+                "name": "Aaron Donald",
+                "safe": "Interior Wrecking Ball #99",
+                "team": "LAR",
+                "tier": "GOAT",
+                "hint": "3x DPOY Who Closes Super Bowls on 4th Down",
+                "vals": [55, 65, 86, 70, 99, 98],
+            },
+            # Traps & Oddballs
+            {
+                "name": "JaMarcus Russell",
+                "safe": "70-Yard Kneeling Cannon #2",
+                "team": "OAK",
+                "tier": "SPEC",
+                "hint": "99 Arm Strength, 45 Everything Else!",
+                "vals": [52, 99, 50, 50, 42, 45],
+            },
+            {
+                "name": "Tim Tebow",
+                "safe": "Mile High Miracle #15",
+                "team": "DEN",
+                "tier": "SPEC",
+                "hint": "96 4th-Quarter Magic & Power Run, 55 Passing Accuracy!",
+                "vals": [55, 78, 91, 70, 82, 96],
+            },
+            {
+                "name": "Nathan Peterman",
+                "safe": "5-Interception Half #2",
+                "team": "BUF",
+                "tier": "TRAP",
+                "hint": "Preseason Hall of Famer, Regular Season Pick-Six Machine",
+                "vals": [54, 62, 60, 55, 48, 40],
             },
         ],
     },
     "⚽ World Soccer": {
+        "icon": "⚽",
         "attributes": [
-            "Finishing / Striking",
-            "Dribbling / Agility",
+            "Clinical Finishing",
+            "Dribbling & Flair",
             "Vision & Passing",
             "Defensive Workrate",
-            "Stamina & Pace",
-            "Big Match Clutchness",
+            "Pace & Stamina",
+            "Big Match Clutch",
         ],
+        "stat_labels": ["Goals/Yr", "Assists/Yr", "Major Trophies"],
         "athletes": [
+            # GOATs & Superstars
             {
-                "name": "La Pulga",
-                "safe": "The 10 Magician",
+                "name": "Lionel Messi",
+                "safe": "La Pulga #10",
                 "team": "ARG",
-                "vals": [98, 99, 99, 65, 88, 99],
+                "tier": "GOAT",
+                "hint": "8x Ballon d'Or Alien Playmaker & Finisher",
+                "vals": [99, 99, 99, 62, 89, 99],
             },
             {
-                "name": "CR7",
-                "safe": "The 7 Apex Striker",
+                "name": "Cristiano Ronaldo",
+                "safe": "CR7 Apex Predator #7",
                 "team": "POR",
-                "vals": [99, 93, 86, 74, 96, 99],
+                "tier": "GOAT",
+                "hint": "900+ Goals, Champions League Clutch God",
+                "vals": [99, 94, 87, 72, 97, 99],
             },
             {
-                "name": "King Pelé",
-                "safe": "The 10 Eternal",
+                "name": "Pelé",
+                "safe": "O Rei #10",
                 "team": "BRA",
-                "vals": [99, 97, 95, 78, 94, 99],
+                "tier": "GOAT",
+                "hint": "3x World Cup Winner & Complete Attacker",
+                "vals": [99, 97, 95, 78, 95, 99],
             },
             {
-                "name": "El Fenômeno",
-                "safe": "R9 Strike Force",
+                "name": "Diego Maradona",
+                "safe": "El Pibe de Oro #10",
+                "team": "ARG",
+                "tier": "GOAT",
+                "hint": "1986 World Cup Solo-Goal Magician",
+                "vals": [95, 99, 98, 68, 91, 99],
+            },
+            {
+                "name": "Zinedine Zidane",
+                "safe": "Zizou Maestro #5",
+                "team": "FRA",
+                "tier": "GOAT",
+                "hint": "Velvet First Touch, Vision & Final Volleys",
+                "vals": [91, 97, 99, 82, 85, 98],
+            },
+            {
+                "name": "Ronaldo Nazário",
+                "safe": "O Fenômeno R9",
                 "team": "BRA",
-                "vals": [99, 98, 85, 55, 92, 97],
+                "tier": "GOAT",
+                "hint": "Unstoppable Explosive Dribbling & Rounding Keepers",
+                "vals": [99, 99, 86, 55, 97, 97],
             },
             {
-                "name": "Zizou",
-                "safe": "The Maestro 5",
-                "team": "FRA",
-                "vals": [91, 95, 99, 82, 84, 98],
+                "name": "Ronaldinho",
+                "safe": "Joga Bonito Magician #10",
+                "team": "BRA",
+                "tier": "GOAT",
+                "hint": "99 Elastico Flair & Bernabéu Standing Ovation",
+                "vals": [92, 99, 96, 58, 91, 95],
             },
             {
-                "name": "Mbappé",
-                "safe": "Turtle Speed 7",
-                "team": "FRA",
-                "vals": [97, 97, 85, 64, 99, 94],
-            },
-            {
-                "name": "VVD",
-                "safe": "The Rock Center-Back",
+                "name": "Johan Cruyff",
+                "safe": "Total Football Prophet #14",
                 "team": "NED",
-                "vals": [70, 75, 82, 99, 90, 92],
-            },
-            # Traps
-            {
-                "name": "Lord Bendtner",
-                "safe": "The Danish Legend",
-                "team": "DEN",
-                "vals": [72, 65, 60, 52, 68, 80],
+                "tier": "GOAT",
+                "hint": "The Cruyff Turn & Tactical Mastermind",
+                "vals": [94, 98, 99, 78, 93, 96],
             },
             {
-                "name": "Adama",
-                "safe": "Baby-Oiled Winger",
+                "name": "Kylian Mbappé",
+                "safe": "Bondy Rocket #7",
+                "team": "FRA",
+                "tier": "STAR",
+                "hint": "World Cup Final Hat-Trick & 99 Blistering Pace",
+                "vals": [97, 96, 86, 60, 99, 98],
+            },
+            {
+                "name": "Erling Haaland",
+                "safe": "The Nordic Cyborg #9",
+                "team": "NOR",
+                "tier": "SPEC",
+                "hint": "99 Goal Poacher & Sprint Power, Low Link-Up Play",
+                "vals": [99, 78, 74, 68, 96, 94],
+            },
+            {
+                "name": "Jude Bellingham",
+                "safe": "Hey Jude #5",
+                "team": "ENG",
+                "tier": "STAR",
+                "hint": "95th-Minute Box-to-Box Clutch Midfielder",
+                "vals": [91, 91, 92, 90, 93, 97],
+            },
+            {
+                "name": "Vinícius Júnior",
+                "safe": "Baila Vini #7",
+                "team": "BRA",
+                "tier": "STAR",
+                "hint": "UCL Knockout Dribbler, Pace & Big-Game Closer",
+                "vals": [92, 98, 89, 68, 98, 97],
+            },
+            {
+                "name": "Lamine Yamal",
+                "safe": "La Masia Wonderkid #19",
                 "team": "ESP",
-                "vals": [68, 90, 64, 75, 99, 65],
+                "tier": "STAR",
+                "hint": "Teenage Euro Champion Wing Wizard",
+                "vals": [89, 97, 95, 72, 94, 94],
+            },
+            {
+                "name": "Kevin De Bruyne",
+                "safe": "King Kev Assist Machine #17",
+                "team": "BEL",
+                "tier": "STAR",
+                "hint": "99 Laser Through-Balls & Crossing",
+                "vals": [90, 89, 99, 78, 85, 94],
+            },
+            {
+                "name": "Luka Modrić",
+                "safe": "Trivela Maestro #10",
+                "team": "CRO",
+                "tier": "GOAT",
+                "hint": "6x UCL Midfield Engine & Endless Stamina",
+                "vals": [84, 94, 99, 91, 93, 97],
+            },
+            {
+                "name": "Andrés Iniesta",
+                "safe": "El Ilusionista #8",
+                "team": "ESP",
+                "tier": "GOAT",
+                "hint": "World Cup Final Winner & Tight-Space Genius",
+                "vals": [85, 98, 99, 82, 88, 98],
+            },
+            {
+                "name": "Rodri",
+                "safe": "Untucked Shirt Anchor #16",
+                "team": "ESP",
+                "tier": "STAR",
+                "hint": "Ballon d'Or Defensive Midfielder & Late Bangers",
+                "vals": [86, 88, 95, 98, 90, 97],
+            },
+            {
+                "name": "N'Golo Kanté",
+                "safe": "Covers 30% of Earth #7",
+                "team": "FRA",
+                "tier": "SPEC",
+                "hint": "99 Defensive Workrate & Endless Lungs",
+                "vals": [72, 84, 85, 99, 99, 93],
+            },
+            {
+                "name": "Paolo Maldini",
+                "safe": "Il Capitano #3",
+                "team": "ITA",
+                "tier": "GOAT",
+                "hint": "Greatest Defender of All Time",
+                "vals": [70, 82, 88, 99, 93, 97],
+            },
+            {
+                "name": "Virgil van Dijk",
+                "safe": "The Anfield Colossus #4",
+                "team": "NED",
+                "tier": "STAR",
+                "hint": "99 Defensive Aura & Long Diagonal Passing",
+                "vals": [76, 78, 88, 99, 91, 94],
+            },
+            {
+                "name": "Sergio Ramos",
+                "safe": "92:48 Header King #4",
+                "team": "ESP",
+                "tier": "STAR",
+                "hint": "Elite Defender with 99 Clutch Final Headers",
+                "vals": [86, 78, 84, 96, 90, 99],
+            },
+            {
+                "name": "Gareth Bale",
+                "safe": "Wales. Golf. Bicycle Kick #11",
+                "team": "WAL",
+                "tier": "STAR",
+                "hint": "99 Sprint Speed & Champions League Final Bangers",
+                "vals": [94, 92, 86, 76, 99, 98],
+            },
+            # Specialists & Traps
+            {
+                "name": "Adama Traoré",
+                "safe": "Baby-Oil Speed Demon #11",
+                "team": "ESP",
+                "tier": "SPEC",
+                "hint": "99 Pace & 94 Dribbling, 58 Finishing into Row Z!",
+                "vals": [58, 94, 65, 72, 99, 62],
+            },
+            {
+                "name": "Nicklas Bendtner",
+                "safe": "Lord Bendtner #52",
+                "team": "DEN",
+                "tier": "TRAP",
+                "hint": "100 Confidence in Interviews, 70 on the Pitch",
+                "vals": [72, 64, 62, 52, 68, 75],
+            },
+            {
+                "name": "Antony",
+                "safe": "360 Fidget Spinner #21",
+                "team": "BRA",
+                "tier": "TRAP",
+                "hint": "88 Flashy Spins, Low End Product",
+                "vals": [68, 88, 70, 68, 84, 62],
             },
         ],
     },
     "🎾 Pro Tennis": {
+        "icon": "🎾",
         "attributes": [
             "Forehand Power",
             "Backhand Precision",
-            "Serve / Aces",
-            "Volley & Net IQ",
-            "Court Coverage / Speed",
-            "Tiebreak Mental Toughness",
+            "Serve & Aces",
+            "Net Volley & Touch",
+            "Court Speed & Stamina",
+            "Tiebreak Mental Clutch",
+        ],
+        "stat_labels": [
+            "Grand Slams",
+            "Career Win %",
+            "Weeks at World #1",
         ],
         "athletes": [
+            # GOATs & Legends
             {
-                "name": "King Roger",
-                "safe": "Basel Maestro",
-                "team": "SUI",
-                "vals": [94, 98, 96, 99, 92, 95],
-            },
-            {
-                "name": "Rafa Clay",
-                "safe": "Mallorca Bull",
-                "team": "ESP",
-                "vals": [99, 92, 90, 88, 99, 99],
-            },
-            {
-                "name": "Novak GOAT",
-                "safe": "Belgrade Wall",
+                "name": "Novak Djokovic",
+                "safe": "The Belgrade Elastic Wall",
                 "team": "SRB",
-                "vals": [96, 97, 95, 90, 99, 99],
+                "tier": "GOAT",
+                "hint": "24 Slams, 99 Backhand, Speed & Tiebreak God",
+                "vals": [96, 99, 94, 90, 99, 99],
             },
             {
-                "name": "Serena Queen",
-                "safe": "Compton Apex Serve",
-                "team": "USA",
-                "vals": [99, 94, 99, 89, 93, 99],
+                "name": "Roger Federer",
+                "safe": "The Swiss Maestro",
+                "team": "SUI",
+                "tier": "GOAT",
+                "hint": "Liquid Forehand, Precision Serve & 99 Net Grace",
+                "vals": [99, 92, 97, 99, 94, 95],
             },
             {
-                "name": "Alcaraz",
-                "safe": "Murcia Rocket",
+                "name": "Rafael Nadal",
+                "safe": "The King of Clay",
                 "team": "ESP",
-                "vals": [98, 93, 92, 91, 98, 96],
+                "tier": "GOAT",
+                "hint": "14 Roland Garros Titles, Heavy Topspin & 99 Fight",
+                "vals": [99, 95, 89, 92, 99, 99],
             },
-            # Traps
             {
-                "name": "Tomic the Tank",
-                "safe": "Matchday Mystery",
+                "name": "Serena Williams",
+                "safe": "The 23-Slam Queen",
+                "team": "USA",
+                "tier": "GOAT",
+                "hint": "Greatest Serve & Power Baseline Game Ever",
+                "vals": [99, 96, 99, 90, 93, 99],
+            },
+            {
+                "name": "Carlos Alcaraz",
+                "safe": "Carlitos Drop-Shot Phenom",
+                "team": "ESP",
+                "tier": "STAR",
+                "hint": "100mph Forehand, Feather Touch & 5-Set Stamina",
+                "vals": [98, 93, 91, 97, 99, 97],
+            },
+            {
+                "name": "Jannik Sinner",
+                "safe": "The San Candido Laser",
+                "team": "ITA",
+                "tier": "STAR",
+                "hint": "Cleanest Ball-Striker on Both Wings Under Pressure",
+                "vals": [97, 98, 94, 88, 95, 96],
+            },
+            {
+                "name": "Pete Sampras",
+                "safe": "Pistol Pete",
+                "team": "USA",
+                "tier": "GOAT",
+                "hint": "99 Clutch Second Serve & Slam Dunk Smash",
+                "vals": [95, 84, 99, 98, 91, 98],
+            },
+            {
+                "name": "Andre Agassi",
+                "safe": "The Vegas Punisher",
+                "team": "USA",
+                "tier": "GOAT",
+                "hint": "Career Golden Slam & Pure Baseline Ball-Striking",
+                "vals": [96, 98, 86, 84, 90, 95],
+            },
+            {
+                "name": "Steffi Graf",
+                "safe": "Fräulein Forehand (Golden Slam)",
+                "team": "GER",
+                "tier": "GOAT",
+                "hint": "99 Inside-Out Forehand, Footwork & Slice",
+                "vals": [99, 93, 91, 92, 99, 98],
+            },
+            {
+                "name": "Iga Świątek",
+                "safe": "The Warsaw Bakery (6-0)",
+                "team": "POL",
+                "tier": "STAR",
+                "hint": "Heavy Topspin, Sliding Movement & Clay Mastery",
+                "vals": [96, 95, 86, 86, 98, 94],
+            },
+            {
+                "name": "Aryna Sabalenka",
+                "safe": "The Tiger Baseline Crusher",
+                "team": "BLR",
+                "tier": "STAR",
+                "hint": "Raw Groundstroke Power & Hardcourt Dominance",
+                "vals": [98, 94, 93, 84, 90, 93],
+            },
+            {
+                "name": "Andy Murray",
+                "safe": "Sir Andy Lob Master",
+                "team": "GBR",
+                "tier": "STAR",
+                "hint": "Elite Two-Handed Backhand, Defense & Grit",
+                "vals": [89, 97, 86, 92, 97, 95],
+            },
+            {
+                "name": "Stan Wawrinka",
+                "safe": "Stan The Man (1HBH Rocket)",
+                "team": "SUI",
+                "tier": "SPEC",
+                "hint": "99 One-Handed Backhand Howitzer in Grand Slam Finals",
+                "vals": [94, 99, 92, 85, 88, 96],
+            },
+            {
+                "name": "Björn Borg",
+                "safe": "The Ice Borg",
+                "team": "SWE",
+                "tier": "GOAT",
+                "hint": "11 Slams, Ice-Cold Pulse & Endless Stamina",
+                "vals": [94, 95, 88, 86, 99, 99],
+            },
+            {
+                "name": "John McEnroe",
+                "safe": "'You Cannot Be Serious!'",
+                "team": "USA",
+                "tier": "GOAT",
+                "hint": "99 Serve-and-Volley Touch & Left-Handed Angles",
+                "vals": [88, 89, 94, 99, 92, 92],
+            },
+            {
+                "name": "Martina Navratilova",
+                "safe": "167-Title Serve & Volley GOAT",
+                "team": "USA",
+                "tier": "GOAT",
+                "hint": "Unmatched Net Coverage & 99 Volley Mastery",
+                "vals": [93, 94, 95, 99, 97, 97],
+            },
+            {
+                "name": "Venus Williams",
+                "safe": "Wimbledon Grass Thunderbolt",
+                "team": "USA",
+                "tier": "STAR",
+                "hint": "129mph Serve, Wingspan & Flat Groundstrokes",
+                "vals": [95, 92, 97, 94, 94, 93],
+            },
+            {
+                "name": "Daniil Medvedev",
+                "safe": "The Hardcourt Octopus",
+                "team": "RUS",
+                "tier": "STAR",
+                "hint": "Stands 15 Feet Behind Baseline & Returns Everything",
+                "vals": [88, 96, 93, 80, 97, 93],
+            },
+            {
+                "name": "Alexander Zverev",
+                "safe": "135mph Serve & Backhand Beam",
+                "team": "GER",
+                "tier": "STAR",
+                "hint": "World-Class Backhand & First Serve, Tight in 5th Sets",
+                "vals": [90, 97, 96, 82, 92, 78],
+            },
+            # High-Variance Specialists & Traps
+            {
+                "name": "John Isner",
+                "safe": "70-68 Marathon Servebot",
+                "team": "USA",
+                "tier": "SPEC",
+                "hint": "All-Time Aces Leader (99 Serve), 68 Movement!",
+                "vals": [91, 74, 99, 84, 68, 92],
+            },
+            {
+                "name": "Ivo Karlović",
+                "safe": "6'11\" Ace Doctor",
+                "team": "CRO",
+                "tier": "SPEC",
+                "hint": "99 Unreturnable Serve, 62 Baseline Rallies!",
+                "vals": [82, 62, 99, 88, 64, 88],
+            },
+            {
+                "name": "Juan Martín del Potro",
+                "safe": "The Tower of Tandil (Thor's Hammer)",
+                "team": "ARG",
+                "tier": "SPEC",
+                "hint": "99 Fearhand Nuclear Missile, Wrist-Limited Backhand",
+                "vals": [99, 78, 93, 85, 84, 94],
+            },
+            {
+                "name": "Gaël Monfils",
+                "safe": "La Monf 360 Showman",
+                "team": "FRA",
+                "tier": "SPEC",
+                "hint": "99 Diving Speed & Trick Shots, Plays for the Crowd",
+                "vals": [92, 89, 91, 88, 99, 78],
+            },
+            {
+                "name": "Nick Kyrgios",
+                "safe": "Underarm Serve Maverick",
                 "team": "AUS",
-                "vals": [65, 60, 78, 55, 50, 40],
+                "tier": "SPEC",
+                "hint": "98 Serve & Touch Talent, Volatile Meltdown Risk",
+                "vals": [93, 91, 98, 95, 82, 62],
+            },
+            {
+                "name": "Bernard Tomic",
+                "safe": "8-Second Match Point Tank",
+                "team": "AUS",
+                "tier": "TRAP",
+                "hint": "Returned Serve with the Handle of His Racket",
+                "vals": [72, 70, 78, 74, 52, 38],
             },
         ],
     },
 }
 
+
+# ==========================================
+# HELPER FUNCTIONS (RADAR SVG, SYNERGY, SIM)
+# ==========================================
+def generate_radar_svg(labels: list[str], values: list[int]) -> str:
+    """Renders a sleek, zero-dependency SVG hexagonal radar chart."""
+    size = 320
+    cx, cy = size / 2, size / 2
+    max_r = 105
+
+    grid_polygons = ""
+    for level in [25, 50, 75, 100]:
+        pts = []
+        r = max_r * (level / 100.0)
+        for i in range(6):
+            angle = math.radians(i * 60 - 90)
+            pts.append(f"{cx + r * math.cos(angle):.1f},{cy + r * math.sin(angle):.1f}")
+        grid_polygons += (
+            f'<polygon points="{" ".join(pts)}" fill="none" '
+            f'stroke="#334155" stroke-width="1" stroke-dasharray="3,3" />'
+        )
+
+    axis_lines = ""
+    label_nodes = ""
+    for i in range(6):
+        angle = math.radians(i * 60 - 90)
+        x_end = cx + max_r * math.cos(angle)
+        y_end = cy + max_r * math.sin(angle)
+        axis_lines += (
+            f'<line x1="{cx}" y1="{cy}" x2="{x_end:.1f}" y2="{y_end:.1f}" '
+            f'stroke="#475569" stroke-width="1" />'
+        )
+        lx = cx + (max_r + 28) * math.cos(angle)
+        ly = cy + (max_r + 22) * math.sin(angle)
+        short_lbl = labels[i].split(" ")[0].upper()
+        val_str = str(values[i]) if values[i] > 0 else "--"
+        label_nodes += (
+            f'<text x="{lx:.1f}" y="{ly:.1f}" fill="#cbd5e1" font-size="11" '
+            f'font-weight="bold" text-anchor="middle" dominant-baseline="middle">'
+            f"{short_lbl} ({val_str})</text>"
+        )
+
+    data_pts = []
+    dots = ""
+    for i in range(6):
+        v = max(15, values[i]) if values[i] > 0 else 10
+        r = max_r * (v / 100.0)
+        angle = math.radians(i * 60 - 90)
+        px = cx + r * math.cos(angle)
+        py = cy + r * math.sin(angle)
+        data_pts.append(f"{px:.1f},{py:.1f}")
+        if values[i] > 0:
+            dots += f'<circle cx="{px:.1f}" cy="{py:.1f}" r="4.5" fill="#38bdf8" stroke="#0f172a" stroke-width="1.5" />'
+
+    poly = (
+        f'<polygon points="{" ".join(data_pts)}" '
+        f'fill="rgba(56, 189, 248, 0.28)" stroke="#38bdf8" stroke-width="2.5" />'
+    )
+
+    return (
+        f'<div style="display:flex;justify-content:center;align-items:center;">'
+        f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}">'
+        f"{grid_polygons}{axis_lines}{poly}{dots}{label_nodes}</svg></div>"
+    )
+
+
+def evaluate_synergies(assigned_slots: dict) -> tuple[int, list[str]]:
+    """Calculates bonus OVR points and unlocked badge descriptions."""
+    bonus = 0
+    badges = []
+    filled = [v for v in assigned_slots.values() if v is not None]
+    if len(filled) < 6:
+        return 0, []
+
+    teams = [a["team"] for a in filled]
+    unique_teams = set(teams)
+    if len(unique_teams) == 6:
+        bonus += 2
+        badges.append("🌈 Rainbow Draft (+2 OVR: 6 Different Teams)")
+    elif any(teams.count(t) >= 3 for t in unique_teams):
+        bonus += 2
+        badges.append("🤝 Franchise Dynasty (+2 OVR: 3+ Same Team/Nation)")
+
+    raw_vals = [assigned_slots[i]["vals"][i] for i in range(6)]
+    if min(raw_vals) >= 88:
+        bonus += 1
+        badges.append("💎 Flawless Blueprint (+1 OVR: All Skills 88+)")
+
+    if sum(1 for v in raw_vals if v >= 98) >= 3:
+        bonus += 1
+        badges.append("⚡ Apex Triple-Crown (+1 OVR: 3+ 98/99 Attributes)")
+
+    return bonus, badges
+
+
+def get_deterministic_athlete(
+    pool: list[dict], mode: str, custom_code: str, step_idx: int, league_name: str
+) -> dict:
+    """Returns a deterministic athlete for Daily/Seeded modes or random for Free Play."""
+    if mode == "🔥 Daily Challenge (Global Seed)":
+        today_str = datetime.date.today().isoformat()
+        seed_str = f"DAILY_{today_str}_{league_name}_{step_idx}"
+        seed_int = int(hashlib.sha256(seed_str.encode()).hexdigest()[:12], 16)
+        rng = random.Random(seed_int)
+        return rng.choice(pool)
+    elif mode == "⚔️ Friend Room Code":
+        clean_code = (custom_code or "FORGE1").strip().upper()
+        seed_str = f"ROOM_{clean_code}_{league_name}_{step_idx}"
+        seed_int = int(hashlib.sha256(seed_str.encode()).hexdigest()[:12], 16)
+        rng = random.Random(seed_int)
+        return rng.choice(pool)
+    else:
+        return random.choice(pool)
+
+
+def simulate_career(league: str, assigned_slots: dict, final_ovr: int) -> dict:
+    """Deterministically simulates career rings, MVPs, prime stats & storyline log."""
+    raw_vals = [assigned_slots[i]["vals"][i] for i in range(6)]
+    sig = sum(v * (i + 17) for i, v in enumerate(raw_vals)) + final_ovr * 31
+    rng = random.Random(sig)
+
+    clutch = raw_vals[5]
+    if final_ovr >= 96:
+        tier = "👑 IMMORTAL GOAT"
+        hof = "100% (First-Ballot Unanimous)"
+        titles = rng.randint(4, 7) + (1 if clutch >= 97 else 0)
+        mvps = rng.randint(3, 6)
+    elif final_ovr >= 92:
+        tier = "🏆 FIRST-BALLOT LEGEND"
+        hof = f"{min(99.8, 88.0 + (final_ovr - 90) * 2.2):.1f}%"
+        titles = rng.randint(2, 4)
+        mvps = rng.randint(1, 3)
+    elif final_ovr >= 87:
+        tier = "🌟 PERENNIAL ALL-STAR"
+        hof = f"{min(84.0, 48.0 + (final_ovr - 85) * 7.5):.1f}%"
+        titles = rng.randint(0, 2)
+        mvps = rng.randint(0, 1)
+    elif final_ovr >= 80:
+        tier = "🛡️ SOLID STARTER / CULT HERO"
+        hof = "14.5%"
+        titles = rng.randint(0, 1)
+        mvps = 0
+    else:
+        tier = "🧢 ROTATION / MEME LEGEND"
+        hof = "1.2%"
+        titles = 0
+        mvps = 0
+
+    # Sport-specific Prime Stats
+    if "Basketball" in league:
+        ppg = round(11.0 + ((raw_vals[0] * 0.55 + raw_vals[1] * 0.45) - 60) * 0.58, 1)
+        rpg = round(3.2 + (raw_vals[4] - 55) * 0.24, 1)
+        apg = round(2.0 + (raw_vals[2] - 55) * 0.23, 1)
+        stats = [f"{max(6.5, ppg)} PPG", f"{max(2.5, rpg)} RPG", f"{max(1.5, apg)} APG"]
+    elif "Football" in league:
+        yds = int(1800 + ((raw_vals[0] + raw_vals[1] + raw_vals[2] + raw_vals[3]) / 4 - 55) * 90)
+        tds = int(12 + ((raw_vals[0] + raw_vals[3] + raw_vals[5]) / 3 - 55) * 0.95)
+        all_pros = max(0, int((final_ovr - 82) * 0.65))
+        stats = [f"{max(950, yds):,} Yds/Yr", f"{max(6, tds)} TDs/Yr", f"{all_pros}x All-Pro"]
+    elif "Soccer" in league:
+        goals = int(5 + ((raw_vals[0] * 0.7 + raw_vals[1] * 0.3) - 55) * 1.05)
+        assists = int(4 + (raw_vals[2] - 55) * 0.58)
+        trophies = titles * 3 + rng.randint(1, 4)
+        stats = [f"{max(2, goals)} Goals/Yr", f"{max(2, assists)} Assists/Yr", f"{trophies} Trophies"]
+    else:
+        # Tennis
+        slams = max(0, int((final_ovr - 85) * 1.55) + (2 if clutch >= 96 else 0))
+        win_pct = round(min(91.5, max(51.0, 50.0 + (final_ovr - 70) * 1.45)), 1)
+        weeks = max(0, int((final_ovr - 87) * 28))
+        titles = slams
+        stats = [f"{slams} Grand Slams", f"{win_pct}% Win Rate", f"{weeks} Wks at #1"]
+
+    # Storyline Log
+    best_idx = raw_vals.index(max(raw_vals))
+    worst_idx = raw_vals.index(min(raw_vals))
+    attrs = LEAGUES_DATA[league]["attributes"]
+    timeline = [
+        f"**Year 1 (Rookie Phenom):** Entered the league with an immediate {raw_vals[best_idx]}-rated **{attrs[best_idx]}** weapon, stunning scouts on opening night.",
+        f"**Year 4 (Breakout Prime):** Peaked at **{final_ovr} OVR**, posting prime numbers of **{stats[0]}** and **{stats[1]}**.",
+        (
+            f"**Year 8 (Championship Legacy):** Delivered a legendary {clutch}-Clutch postseason run to cement **{titles} Major Titles/Rings**."
+            if titles > 0
+            else f"**Year 8 (Playoff Heartbreak):** Despite elite numbers, opponents ruthlessly targeted their {raw_vals[worst_idx]}-rated **{attrs[worst_idx]}** in tight playoff series."
+        ),
+        f"**Year 15 (Retirement & Hall of Fame Verdict):** Hung up the jersey with a **{hof}** Hall of Fame probability as a **{tier}**.",
+    ]
+
+    return {
+        "tier": tier,
+        "hof": hof,
+        "titles": titles,
+        "mvps": mvps,
+        "stats": stats,
+        "timeline": timeline,
+    }
+
+
 # ==========================================
 # SESSION STATE INITIALIZATION
 # ==========================================
+def reset_forge_state():
+    st.session_state.assigned_slots = {i: None for i in range(6)}
+    st.session_state.current_spun_athlete = None
+    st.session_state.spin_step = 0
+    st.session_state.skip_tokens = 1
+    st.session_state.swap_tokens = 1
+    st.session_state.auto_tokens = 1
+    st.session_state.drawn_names = set()
+
+
 if "league" not in st.session_state:
     st.session_state.league = "🏀 Pro Basketball"
+if "game_mode" not in st.session_state:
+    st.session_state.game_mode = "🎲 Free Play (Random)"
+if "room_code" not in st.session_state:
+    st.session_state.room_code = "GOAT2026"
+if "blind_mode" not in st.session_state:
+    st.session_state.blind_mode = True
 if "safe_mode" not in st.session_state:
     st.session_state.safe_mode = False
-if "assigned_slots" not in st.session_state:
-    st.session_state.assigned_slots = {
-        i: None for i in range(6)
-    }  # slot_idx -> athlete_dict
-if "current_spun_athlete" not in st.session_state:
-    st.session_state.current_spun_athlete = None
-if "skip_tokens" not in st.session_state:
-    st.session_state.skip_tokens = 1
-if "best_fit_tokens" not in st.session_state:
-    st.session_state.best_fit_tokens = 1
 if "player_name" not in st.session_state:
-    st.session_state.player_name = "Apex Rookie"
+    st.session_state.player_name = "Apex Prospect"
+if "hall_of_fame_log" not in st.session_state:
+    st.session_state.hall_of_fame_log = []
+if "assigned_slots" not in st.session_state:
+    reset_forge_state()
+
 
 # ==========================================
 # SIDEBAR CONTROLS
 # ==========================================
-st.sidebar.title("⚙️ Forge Control Center")
+st.sidebar.title("⚡ Forge Control Room")
 
-new_league = st.sidebar.selectbox(
-    "Select Sport League", list(LEAGUES_DATA.keys())
+selected_league = st.sidebar.selectbox(
+    "1. Select Sport League", list(LEAGUES_DATA.keys())
 )
-if new_league != st.session_state.league:
-    st.session_state.league = new_league
-    st.session_state.assigned_slots = {i: None for i in range(6)}
-    st.session_state.current_spun_athlete = None
+if selected_league != st.session_state.league:
+    st.session_state.league = selected_league
+    reset_forge_state()
     st.rerun()
 
-st.sidebar.markdown("---")
-st.session_state.safe_mode = st.sidebar.checkbox(
-    "🛡️ Safe Names Mode (Parody/No IRL Names)",
-    value=st.session_state.safe_mode,
+selected_mode = st.sidebar.radio(
+    "2. Challenge Mode",
+    [
+        "🎲 Free Play (Random)",
+        "🔥 Daily Challenge (Global Seed)",
+        "⚔️ Friend Room Code",
+    ],
 )
-
-st.sidebar.markdown("### 🎴 Custom Player Name")
-st.session_state.player_name = st.sidebar.text_input(
-    "Name your forged star", value=st.session_state.player_name
-)
-
-st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Reset Forge", use_container_width=True):
-    st.session_state.assigned_slots = {i: None for i in range(6)}
-    st.session_state.current_spun_athlete = None
-    st.session_state.skip_tokens = 1
-    st.session_state.best_fit_tokens = 1
+if selected_mode != st.session_state.game_mode:
+    st.session_state.game_mode = selected_mode
+    reset_forge_state()
     st.rerun()
 
-# ==========================================
-# MAIN APP HEADER
-# ==========================================
-st.title("⚡ PLAYER FORGE")
-st.markdown(
-    "**Spin random athletes from history, then strategically assign them to build your ultimate 6-tool GOAT!**"
-)
-
-league_info = LEAGUES_DATA[st.session_state.league]
-attributes = league_info["attributes"]
-athletes_pool = league_info["athletes"]
-
-# ==========================================
-# CENTRAL SPINDLE & STAGE
-# ==========================================
-st.markdown("### 🎯 Player Spin Stage")
-
-col_spin1, col_spin2, col_spin3 = st.columns([2, 2, 2])
-
-with col_spin1:
-    if st.button("🎲 SPIN PLAYER", type="primary", use_container_width=True):
-        st.session_state.current_spun_athlete = random.choice(athletes_pool)
+if st.session_state.game_mode == "⚔️ Friend Room Code":
+    new_code = st.sidebar.text_input(
+        "Enter Shared Room Code", value=st.session_state.room_code
+    )
+    if new_code != st.session_state.room_code:
+        st.session_state.room_code = new_code
+        reset_forge_state()
         st.rerun()
 
-with col_spin2:
-    if st.session_state.skip_tokens > 0 and st.session_state.current_spun_athlete:
-        if st.button(
-            f"⏭️ Skip Token ({st.session_state.skip_tokens} left)",
-            use_container_width=True,
-        ):
-            st.session_state.current_spun_athlete = random.choice(
-                athletes_pool
-            )
-            st.session_state.skip_tokens -= 1
-            st.rerun()
-    else:
-        st.markdown(
-            "<div style='text-align:center; color:#64748b; padding-top:8px;'>No Skips Left</div>",
-            unsafe_allow_html=True,
-        )
-
-with col_spin3:
-    if (
-        st.session_state.best_fit_tokens > 0
-        and st.session_state.current_spun_athlete
-    ):
-        if st.button(
-            f"⚡ Auto-Best Fit ({st.session_state.best_fit_tokens} left)",
-            use_container_width=True,
-        ):
-            # Find best open slot
-            ath = st.session_state.current_spun_athlete
-            best_val = -1
-            best_idx = None
-            for idx, attr in enumerate(attributes):
-                if st.session_state.assigned_slots[idx] is None:
-                    if ath["vals"][idx] > best_val:
-                        best_val = ath["vals"][idx]
-                        best_idx = idx
-            if best_idx is not None:
-                st.session_state.assigned_slots[best_idx] = ath
-                st.session_state.current_spun_athlete = None
-                st.session_state.best_fit_tokens -= 1
-                st.rerun()
-    else:
-        st.markdown(
-            "<div style='text-align:center; color:#64748b; padding-top:8px;'>No Auto-Fits Left</div>",
-            unsafe_allow_html=True,
-        )
-
-# Display Current Spun Athlete Card
-curr_ath = st.session_state.current_spun_athlete
-if curr_ath:
-    display_name = (
-        curr_ath["safe"] if st.session_state.safe_mode else curr_ath["name"]
-    )
-    st.markdown(
-        f"""
-        <div style="background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%); border: 2px solid #6366f1; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px; margin-bottom: 25px;">
-            <h2 style="margin: 0; color: #a5b4fc;">🌟 SPUN ATHLETE: {display_name} ({curr_ath['team']})</h2>
-            <p style="margin: 5px 0 15px 0; color: #cbd5e1; font-size: 14px;">Select an open attribute slot below to lock in their rating!</p>
-            <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-        """,
-        unsafe_allow_html=True,
-    )
-
-    cols_vals = st.columns(6)
-    for i, attr in enumerate(attributes):
-        with cols_vals[i]:
-            st.metric(label=attr[:10], value=curr_ath["vals"][i])
-
-    st.markdown("</div></div>", unsafe_allow_html=True)
-else:
-    st.info(
-        "👆 Click **SPIN PLAYER** above to draw an athlete into the forge stage!"
-    )
-
-st.markdown("---")
-
-# ==========================================
-# FORGED PLAYER BUILDER BOARD (6 SLOTS)
-# ==========================================
-st.markdown(
-    f"### 🛡️ Forged Board: {st.session_state.player_name}'s Skill DNA"
+st.sidebar.markdown("---")
+st.sidebar.subheader("🕵️ Scouting & Legal Settings")
+st.session_state.blind_mode = st.sidebar.toggle(
+    "🕶️ Authentic Blind Mode (Hide Ratings Until Picked)",
+    value=st.session_state.blind_mode,
+)
+st.session_state.safe_mode = st.sidebar.toggle(
+    "🛡️ Legal-Safe Parody Names",
+    value=st.session_state.safe_mode,
+)
+st.session_state.player_name = st.sidebar.text_input(
+    "Custom Prospect Name", value=st.session_state.player_name
 )
 
-board_cols = st.columns(3)
-for idx, attr in enumerate(attributes):
-    col_idx = idx % 3
-    with board_cols[col_idx]:
-        assigned = st.session_state.assigned_slots[idx]
+st.sidebar.markdown("---")
+if st.sidebar.button("🔄 Reset Current Build", use_container_width=True):
+    reset_forge_state()
+    st.rerun()
 
-        if assigned is not None:
-            a_name = (
-                assigned["safe"]
-                if st.session_state.safe_mode
-                else assigned["name"]
-            )
-            val = assigned["vals"][idx]
-            st.markdown(
-                f"""
-                <div class="slot-card filled">
-                    <span style="font-size: 12px; color: #94a3b8; font-weight: bold;">{attr.upper()}</span>
-                    <h3 style="margin: 5px 0; color: #60a5fa;">{val} / 99</h3>
-                    <p style="margin: 0; font-size: 13px; color: #e2e8f0;">Source: {a_name} ({assigned['team']})</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if st.button(f"Clear Slot {idx+1}", key=f"clear_{idx}"):
-                st.session_state.assigned_slots[idx] = None
-                st.rerun()
-        else:
-            st.markdown(
-                f"""
-                <div class="slot-card">
-                    <span style="font-size: 12px; color: #94a3b8; font-weight: bold;">{attr.upper()}</span>
-                    <h3 style="margin: 5px 0; color: #64748b;">EMPTY</h3>
-                    <p style="margin: 0; font-size: 12px; color: #64748b;">Awaiting Assignment</p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            if curr_ath is not None:
-                if st.button(f"Assign to Slot {idx+1}", key=f"assign_{idx}y"):
-                    st.session_state.assigned_slots[idx] = curr_ath
-                    st.session_state.current_spun_athlete = None
-                    st.rerun()
 
 # ==========================================
-# CALCULATIONS & CAREER SIMULATION
+# MAIN HEADER & LIVE TELEMETRY
 # ==========================================
-st.markdown("---")
-st.markdown("### 📈 Career Simulation & Scouting Report")
+league_cfg = LEAGUES_DATA[st.session_state.league]
+attributes = league_cfg["attributes"]
+pool = league_cfg["athletes"]
 
-filled_count = sum(
+filled_slots_count = sum(
     1 for v in st.session_state.assigned_slots.values() if v is not None
 )
 
-if filled_count == 6:
-    vals_list = [
-        st.session_state.assigned_slots[i]["vals"][i] for i in range(6)
+col_hdr1, col_hdr2 = st.columns([3, 2])
+with col_hdr1:
+    st.title(f"{league_cfg['icon']} PLAYER FORGE")
+    st.caption(
+        f"**Mode:** {st.session_state.game_mode} | "
+        f"**Scouting:** {'🕶️ Blind Mode (True Knowledge Test)' if st.session_state.blind_mode else '👁️ Scouted Mode (Ratings Visible)'} | "
+        f"**Pool Size:** {len(pool)} Athletes"
+    )
+with col_hdr2:
+    current_vals = [
+        st.session_state.assigned_slots[i]["vals"][i]
+        for i in range(6)
+        if st.session_state.assigned_slots[i] is not None
     ]
-    ovr = sum(vals_list) // 6
+    running_avg = int(sum(current_vals) / len(current_vals)) if current_vals else 0
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Slots Forged", f"{filled_slots_count} / 6")
+    m2.metric("Running OVR", f"{running_avg}" if filled_slots_count > 0 else "--")
+    m3.metric("Skips Left", f"{st.session_state.skip_tokens}")
 
-    # Determine Tier & Hall of Fame Probability
-    if ovr >= 95:
-        tier = "👑 GOAT TIER LEGEND"
-        hof_prob = "99.9%"
-        rings = random.randint(5, 8)
-        mvps = random.randint(3, 6)
-    elif ovr >= 90:
-        tier = "⚡ SUPERSTAR ICON"
-        hof_prob = "95.0%"
-        rings = random.randint(2, 4)
-        mvps = random.randint(1, 3)
-    elif ovr >= 85:
-        tier = "🌟 ALL-STAR STARTER"
-        hof_prob = "78.4%"
-        rings = random.randint(0, 2)
-        mvps = 0
-    else:
-        tier = "🧢 BENCH SPECIALIST"
-        hof_prob = "22.1%"
-        rings = 0
-        mvps = 0
-
-    col_res1, col_res2, col_res3, col_res4 = st.columns(4)
-    with col_res1:
-        st.metric("Composite OVR", f"{ovr} OVR")
-    with col_res2:
-        st.metric("Career Tier", tier)
-    with col_res3:
-        st.metric("Championships / Titles", f"{rings} Rings")
-    with col_res4:
-        st.metric("HOF Probability", hof_prob)
-
-    st.success(
-        f"🎉 **{st.session_state.player_name}** is fully forged! Ready to dominate the league history books."
-    )
-else:
-    st.warning(
-        f"⚠️ Complete all 6 attribute slots to unlock the career simulation and Hall of Fame projection! ({filled_count}/6 filled)"
-    )
 
 # ==========================================
-# FOOTER & LEGAL DISCLAIMER
+# TABS: FORGE ARENA | ROSTER DEX | HOF LEADERBOARD
+# ==========================================
+tab_arena, tab_dex, tab_hof = st.tabs(
+    [
+        "🏟️ Forge Arena",
+        f"📖 League Scouting Dex ({len(pool)} Players)",
+        f"🏛️ Session Leaderboard ({len(st.session_state.hall_of_fame_log)})",
+    ]
+)
+
+with tab_arena:
+    # ------------------------------------------
+    # CENTRAL SPIN STAGE
+    # ------------------------------------------
+    if filled_slots_count < 6:
+        btn_c1, btn_c2, btn_c3 = st.columns([2, 1.5, 1.5])
+
+        with btn_c1:
+            spin_disabled = st.session_state.current_spun_athlete is not None
+            if st.button(
+                f"🎰 SPIN ATHLETE #{filled_slots_count + 1}",
+                type="primary",
+                disabled=spin_disabled,
+                use_container_width=True,
+            ):
+                # Draw avoiding duplicates when possible
+                available = [
+                    a
+                    for a in pool
+                    if a["name"] not in st.session_state.drawn_names
+                ] or pool
+                drawn = get_deterministic_athlete(
+                    available,
+                    st.session_state.game_mode,
+                    st.session_state.room_code,
+                    st.session_state.spin_step,
+                    st.session_state.league,
+                )
+                st.session_state.current_spun_athlete = drawn
+                st.session_state.drawn_names.add(drawn["name"])
+                st.session_state.spin_step += 1
+                st.rerun()
+
+        with btn_c2:
+            can_skip = (
+                st.session_state.current_spun_athlete is not None
+                and st.session_state.skip_tokens > 0
+            )
+            if st.button(
+                f"⏭️ Burn Skip Token ({st.session_state.skip_tokens})",
+                disabled=not can_skip,
+                use_container_width=True,
+            ):
+                available = [
+                    a
+                    for a in pool
+                    if a["name"] not in st.session_state.drawn_names
+                ] or pool
+                drawn = get_deterministic_athlete(
+                    available,
+                    st.session_state.game_mode,
+                    st.session_state.room_code,
+                    st.session_state.spin_step,
+                    st.session_state.league,
+                )
+                st.session_state.current_spun_athlete = drawn
+                st.session_state.drawn_names.add(drawn["name"])
+                st.session_state.spin_step += 1
+                st.session_state.skip_tokens -= 1
+                st.rerun()
+
+        with btn_c3:
+            can_auto = (
+                st.session_state.current_spun_athlete is not None
+                and st.session_state.auto_tokens > 0
+            )
+            if st.button(
+                f"🤖 Auto-Best Slot ({st.session_state.auto_tokens})",
+                disabled=not can_auto,
+                use_container_width=True,
+            ):
+                ath = st.session_state.current_spun_athlete
+                best_idx = max(
+                    (
+                        i
+                        for i in range(6)
+                        if st.session_state.assigned_slots[i] is None
+                    ),
+                    key=lambda idx: ath["vals"][idx],
+                )
+                st.session_state.assigned_slots[best_idx] = ath
+                st.session_state.current_spun_athlete = None
+                st.session_state.auto_tokens -= 1
+                st.rerun()
+
+    # Active Spun Player Card
+    curr_ath = st.session_state.current_spun_athlete
+    if curr_ath is not None:
+        disp_name = (
+            curr_ath["safe"] if st.session_state.safe_mode else curr_ath["name"]
+        )
+        tier_map = {
+            "GOAT": ("pill-goat", "👑 GOAT LEGEND"),
+            "STAR": ("pill-star", "🌟 SUPERSTAR"),
+            "SPEC": ("pill-spec", "🎯 HIGH-VARIANCE SPECIALIST"),
+            "TRAP": ("pill-trap", "⚠️ DANGER TRAP"),
+        }
+        pill_cls, pill_txt = tier_map.get(curr_ath["tier"], ("pill-star", "STAR"))
+
+        st.markdown(
+            f"""
+            <div class="spin-banner">
+                <span class="tier-pill {pill_cls}">{pill_txt}</span>
+                <h2 style="margin: 4px 0; color: #f8fafc;">{disp_name} <span style="color:#94a3b8;font-size:18px;">({curr_ath['team']})</span></h2>
+                <p style="margin: 4px 0 12px 0; color: #a5b4fc; font-size: 14px;">
+                    <strong>Scouting Report:</strong> {curr_ath['hint']}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Show preview row (hidden in Blind Mode, visible in Scouted Mode)
+        preview_cols = st.columns(6)
+        for i, attr in enumerate(attributes):
+            with preview_cols[i]:
+                is_open = st.session_state.assigned_slots[i] is None
+                if st.session_state.blind_mode:
+                    shown_val = "??" if is_open else "🔒"
+                else:
+                    shown_val = f"{curr_ath['vals'][i]}"
+                st.metric(label=attr, value=shown_val)
+    elif filled_slots_count < 6:
+        st.info(
+            f"👆 Click **SPIN ATHLETE #{filled_slots_count + 1}** above to draw your next player, then pick which skill slot to lock in!"
+        )
+
+    st.markdown("---")
+
+    # ------------------------------------------
+    # 6-SLOT ATTRIBUTE BOARD & RADAR CHART
+    # ------------------------------------------
+    board_left, radar_right = st.columns([2.2, 1])
+
+    with board_left:
+        st.subheader(f"🛠️ {st.session_state.player_name}'s 6-Tool Blueprint")
+        grid_cols = st.columns(3)
+
+        for idx, attr in enumerate(attributes):
+            with grid_cols[idx % 3]:
+                assigned = st.session_state.assigned_slots[idx]
+                if assigned is not None:
+                    a_name = (
+                        assigned["safe"]
+                        if st.session_state.safe_mode
+                        else assigned["name"]
+                    )
+                    val = assigned["vals"][idx]
+                    card_cls = (
+                        "filled-elite"
+                        if val >= 94
+                        else ("filled-good" if val >= 80 else "filled-trap")
+                    )
+                    val_color = (
+                        "#facc15"
+                        if val >= 94
+                        else ("#60a5fa" if val >= 80 else "#f87171")
+                    )
+                    st.markdown(
+                        f"""
+                        <div class="slot-card {card_cls}">
+                            <div style="font-size:11px; color:#cbd5e1; font-weight:700; text-transform:uppercase;">
+                                {idx + 1}. {attr}
+                            </div>
+                            <div style="font-size:34px; font-weight:900; color:{val_color}; margin: 6px 0;">
+                                {val}
+                            </div>
+                            <div style="font-size:13px; color:#f8fafc; font-weight:600;">
+                                {a_name}
+                            </div>
+                            <div style="font-size:11px; color:#94a3b8;">
+                                Team: {assigned['team']}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    # Optional Swap Token allows replacing an already filled slot with current spun player
+                    if (
+                        curr_ath is not None
+                        and st.session_state.swap_tokens > 0
+                    ):
+                        if st.button(
+                            f"🔄 Overwrite ({st.session_state.swap_tokens} Swap)",
+                            key=f"swap_{idx}",
+                            use_container_width=True,
+                        ):
+                            st.session_state.assigned_slots[idx] = curr_ath
+                            st.session_state.current_spun_athlete = None
+                            st.session_state.swap_tokens -= 1
+                            st.rerun()
+                else:
+                    preview_txt = (
+                        f"Lock In ({curr_ath['vals'][idx]} Rating)"
+                        if (curr_ath and not st.session_state.blind_mode)
+                        else "Lock In Slot"
+                    )
+                    st.markdown(
+                        f"""
+                        <div class="slot-card">
+                            <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">
+                                {idx + 1}. {attr}
+                            </div>
+                            <div style="font-size:26px; font-weight:800; color:#475569; margin: 14px 0;">
+                                OPEN SLOT
+                            </div>
+                            <div style="font-size:12px; color:#64748b;">
+                                Waiting for assignment
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    if curr_ath is not None:
+                        if st.button(
+                            f"⚡ {preview_txt}",
+                            key=f"pick_{idx}",
+                            type="primary",
+                            use_container_width=True,
+                        ):
+                            st.session_state.assigned_slots[idx] = curr_ath
+                            st.session_state.current_spun_athlete = None
+                            st.rerun()
+
+    with radar_right:
+        st.subheader("🕸️ 6-Tool Radar DNA")
+        radar_vals = [
+            st.session_state.assigned_slots[i]["vals"][i]
+            if st.session_state.assigned_slots[i] is not None
+            else 0
+            for i in range(6)
+        ]
+        st.markdown(
+            generate_radar_svg(attributes, radar_vals),
+            unsafe_allow_html=True,
+        )
+
+    # ------------------------------------------
+    # FULL CAREER SIMULATION & SHARE SCORECARD
+    # ------------------------------------------
+    if filled_slots_count == 6:
+        st.markdown("---")
+        base_ovr = sum(radar_vals) // 6
+        syn_bonus, syn_badges = evaluate_synergies(
+            st.session_state.assigned_slots
+        )
+        final_ovr = min(99, base_ovr + syn_bonus)
+
+        sim = simulate_career(
+            st.session_state.league,
+            st.session_state.assigned_slots,
+            final_ovr,
+        )
+
+        st.subheader(
+            f"🏆 Career Simulation Report: {st.session_state.player_name}"
+        )
+
+        if syn_badges:
+            badge_html = "".join(
+                f'<span class="synergy-chip">{b}</span>' for b in syn_badges
+            )
+            st.markdown(badge_html, unsafe_allow_html=True)
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric(
+            "Final Composite OVR",
+            f"{final_ovr} OVR",
+            f"+{syn_bonus} Synergy" if syn_bonus > 0 else "Base Rating",
+        )
+        c2.metric("Legacy Tier", sim["tier"])
+        c3.metric("Major Titles / Rings", f"{sim['titles']}")
+        c4.metric("Hall of Fame Odds", sim["hof"])
+
+        sc1, sc2, sc3 = st.columns(3)
+        for i in range(3):
+            sc1.metric(league_cfg["stat_labels"][0], sim["stats"][0]) if i == 0 else None
+            sc2.metric(league_cfg["stat_labels"][1], sim["stats"][1]) if i == 1 else None
+            sc3.metric(league_cfg["stat_labels"][2], sim["stats"][2]) if i == 2 else None
+
+        col_story, col_share = st.columns([1.6, 1])
+        with col_story:
+            st.markdown("#### 📜 Career Storyline Chronicle")
+            for event in sim["timeline"]:
+                st.markdown(f"- {event}")
+
+            if st.button("🏛️ Save Build to Session Leaderboard"):
+                st.session_state.hall_of_fame_log.append(
+                    {
+                        "Prospect": st.session_state.player_name,
+                        "League": st.session_state.league,
+                        "Mode": st.session_state.game_mode,
+                        "Final OVR": final_ovr,
+                        "Tier": sim["tier"],
+                        "Titles": sim["titles"],
+                        "HOF Odds": sim["hof"],
+                    }
+                )
+                st.success("Saved to Session Leaderboard tab!")
+
+        with col_share:
+            st.markdown("#### 📲 Shareable Group-Chat Scorecard")
+            emoji_bars = "".join(
+                "🟨" if v >= 95 else ("🟦" if v >= 85 else ("🟩" if v >= 75 else "🟥"))
+                for v in radar_vals
+            )
+            lines = [
+                f"⚡ PLAYER FORGE | {st.session_state.league}",
+                f"👤 {st.session_state.player_name} — {final_ovr} OVR ({sim['tier']})",
+                f"📊 DNA: {emoji_bars}",
+            ]
+            for i, attr in enumerate(attributes):
+                ath = st.session_state.assigned_slots[i]
+                nm = ath["safe"] if st.session_state.safe_mode else ath["name"]
+                lines.append(f"• {attr}: {radar_vals[i]} ({nm})")
+            lines.append(
+                f"🏆 Titles: {sim['titles']} | HOF: {sim['hof']}"
+            )
+            st.code("\n".join(lines), language="text")
+
+
+# ==========================================
+# TAB 2: LEAGUE SCOUTING DEX (ALL PLAYERS)
+# ==========================================
+with tab_dex:
+    st.subheader(f"📖 {st.session_state.league} Athlete Database ({len(pool)} Players)")
+    st.caption(
+        "Use this database in Free Play or study up before tackling Authentic Blind Mode!"
+    )
+    dex_rows = []
+    for a in pool:
+        row = {
+            "Athlete": a["safe"] if st.session_state.safe_mode else a["name"],
+            "Team": a["team"],
+            "Tier": a["tier"],
+            "Avg OVR": int(sum(a["vals"]) / 6),
+        }
+        for i, attr in enumerate(attributes):
+            row[attr] = a["vals"][i]
+        dex_rows.append(row)
+    df_dex = pd.DataFrame(dex_rows).sort_values(by="Avg OVR", ascending=False)
+    st.dataframe(df_dex, use_container_width=True, hide_index=True)
+
+
+# ==========================================
+# TAB 3: SESSION HALL OF FAME LEADERBOARD
+# ==========================================
+with tab_hof:
+    st.subheader("🏛️ Session Hall of Fame Leaderboard")
+    if st.session_state.hall_of_fame_log:
+        df_hof = pd.DataFrame(st.session_state.hall_of_fame_log).sort_values(
+            by="Final OVR", ascending=False
+        )
+        st.dataframe(df_hof, use_container_width=True, hide_index=True)
+    else:
+        st.info(
+            "Complete a 6-slot player build in the **Forge Arena** and click **Save Build to Session Leaderboard** to rank your creations here!"
+        )
+
+# ==========================================
+# FOOTER DISCLAIMER
 # ==========================================
 st.markdown("---")
 st.markdown(
     """
-    <div style="text-align: center; color: #64748b; font-size: 12px; padding-bottom: 20px;">
-        <p><strong>Player Forge</strong> is an independent fan-made sports attribute drafting simulation game.</p>
-        <p>Not affiliated with, endorsed by, or licensed by any professional sports league, player association, or governing body. All athlete names in Safe Mode are purely parodic.</p>
+    <div style="text-align: center; color: #64748b; font-size: 12px;">
+        <strong>Player Forge</strong> is an independent, fan-made sports trivia and attribute drafting simulation.
+        Not affiliated with, endorsed by, or licensed by the NBA, NFL, FIFA, ATP, WTA, or any players association.
     </div>
     """,
     unsafe_allow_html=True,
