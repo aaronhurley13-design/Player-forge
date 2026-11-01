@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player Forge | Ultimate GOAT Builder</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #090d16;
+      color: #f8fafc;
+    }
+    .spin-banner {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      border: 2px solid #6366f1;
+      box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.3);
+    }
+    .slot-card {
+      background-color: #131c2e;
+      border: 2px dashed #334155;
+      transition: all 0.2s ease;
+    }
+    .slot-card.open-active:hover {
+      border-color: #6366f1;
+      transform: translateY(-2px);
+      background-color: #19253d;
+      cursor: pointer;
+    }
+    .slot-card.filled-elite {
+      border: 2px solid #eab308;
+      background: linear-gradient(135deg, #422006 0%, #131c2e 100%);
+    }
+    .slot-card.filled-good {
+      border: 2px solid #3b82f6;
+      background: linear-gradient(135deg, #172554 0%, #131c2e 100%);
+    }
+    .slot-card.filled-trap {
+      border: 2px solid #ef4444;
+      background: linear-gradient(135deg, #450a0a 0%, #131c2e 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⚡</span>
+        <div>
+          <h1 class="text-xl font-black tracking-tight text-white">PLAYER FORGE</h1>
+          <p class="text-xs text-slate-400">Spin an Athlete • Lock the Attribute • Forge a GOAT</p>
+        </div>
+      </div>
+
+      <!-- League Selector Pills -->
+      <div class="flex flex-wrap gap-1.5" id="leagueTabs"></div>
+
+      <!-- Quick Toggles -->
+      <div class="flex items-center gap-2 text-xs">
+        <button id="blindToggleBtn" onclick="toggleBlindMode()" class="px-3 py-1.5 rounded-lg font-bold border border-indigo-500/40 bg-indigo-950/60 text-indigo-300 hover:bg-indigo-900/60 transition">
+          🕶️ Blind Mode: ON
+        </button>
+        <button id="safeToggleBtn" onclick="toggleSafeMode()" class="px-3 py-1.5 rounded-lg font-bold border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+          🛡️ Names: Real
+        </button>
+        <button onclick="resetGame()" class="px-3 py-1.5 rounded-lg font-bold bg-rose-600/20 border border-rose-500/40 text-rose-300 hover:bg-rose-600/30 transition">
+          🔄 Reset
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SUB-BAR: CHALLENGE MODE, PROSPECT NAME & TELEMETRY -->
+  <div class="bg-slate-900/40 border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs">
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="text-slate-400 font-semibold">Mode:</label>
+        <select id="modeSelect" onchange="changeMode()" class="bg-slate-800 border border-slate-700 rounded-md px-2.5 py-1 text-white font-semibold">
+          <option value="free">🎲 Free Play (Random)</option>
+          <option value="daily">🔥 Daily Challenge (Global Seed)</option>
+          <option value="room">⚔️ Friend Room Code</option>
+        </select>
+        <input id="roomCodeInput" type="text" placeholder="Room Code" value="GOAT26" oninput="changeRoomCode()" class="hidden bg-slate-800 border border-indigo-500 rounded-md px-2.5 py-1 text-white font-bold w-28 uppercase" />
+
+        <span class="text-slate-600">|</span>
+        <label class="text-slate-400 font-semibold">Prospect Name:</label>
+        <input id="prospectNameInput" type="text" value="Apex Prospect" oninput="updateProspectName()" class="bg-slate-800 border border-slate-700 rounded-md px-2.5 py-1 text-white font-semibold w-40" />
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div><span class="text-slate-400">Slots:</span> <strong id="telemetrySlots" class="text-white">0 / 6</strong></div>
+        <div><span class="text-slate-400">Running OVR:</span> <strong id="telemetryOvr" class="text-sky-400">--</strong></div>
+        <button onclick="switchMainView('arena')" id="tabBtnArena" class="text-indigo-400 font-bold underline">🏟️ Arena</button>
+        <button onclick="switchMainView('dex')" id="tabBtnDex" class="text-slate-400 hover:text-white font-semibold">📖 Player Dex</button>
+        <button onclick="switchMainView('hof')" id="tabBtnHof" class="text-slate-400 hover:text-white font-semibold">🏛️ Leaderboard (<span id="hofCount">0</span>)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <!-- VIEW 1: FORGE ARENA -->
+    <div id="viewArena">
+      <!-- SPIN STAGE -->
+      <div id="spinControlsBar" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+        <button id="spinBtn" onclick="spinAthlete()" class="md:col-span-2 py-3.5 px-6 rounded-xl font-black text-base bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white shadow-lg shadow-indigo-600/30 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          🎰 SPIN ATHLETE #1
+        </button>
+        <button id="skipBtn" onclick="useSkipToken()" class="py-3.5 px-4 rounded-xl font-bold text-sm bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          ⏭️ Skip Player (1 left)
+        </button>
+        <button id="autoBtn" onclick="useAutoToken()" class="py-3.5 px-4 rounded-xl font-bold text-sm bg-emerald-950/70 hover:bg-emerald-900/70 border border-emerald-500/40 text-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition">
+          🤖 Auto-Best Slot (1 left)
+        </button>
+      </div>
+
+      <!-- ACTIVE SPUN ATHLETE BANNER -->
+      <div id="spunBannerContainer" class="mb-6"></div>
+
+      <!-- BOARD & RADAR SPLIT -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <!-- 6-Slot Grid -->
+        <div class="lg:col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-white" id="boardTitle">🛠️ Apex Prospect's 6-Tool Blueprint</h2>
+            <span class="text-xs text-slate-400" id="swapTokenBadge">🔄 1 Overwrite Swap Token Available</span>
+          </div>
+          <div id="slotsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5"></div>
+        </div>
+
+        <!-- SVG Radar DNA -->
+        <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col items-center">
+          <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-2">🕸️ 6-Tool Radar DNA</h3>
+          <div id="radarContainer" class="w-full flex justify-center"></div>
+        </div>
+      </div>
+
+      <!-- CAREER SIMULATION REPORT (Shows when 6/6 filled) -->
+      <div id="careerSimContainer" class="mt-8 hidden"></div>
+    </div>
+
+    <!-- VIEW 2: LEAGUE SCOUTING DEX -->
+    <div id="viewDex" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-xl font-black text-white" id="dexTitle">📖 Athlete Scouting Database</h2>
+          <p class="text-xs text-slate-400">Study athlete strengths and avoid hidden stat traps in Authentic Blind Mode.</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto border border-slate-800 rounded-xl bg-slate-900/60">
+        <table class="w-full text-left text-xs">
+          <thead id="dexTableHead" class="bg-slate-800/80 text-slate-300 uppercase"></thead>
+          <tbody id="dexTableBody" class="divide-y divide-slate-800"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VIEW 3: LEADERBOARD -->
+    <div id="viewHof" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-black text-white">🏛️ Hall of Fame Leaderboard (Saved Locally)</h2>
+        <button onclick="clearLeaderboard()" class="text-xs px-3 py-1.5 rounded bg-rose-950 text-rose-300 border border-rose-700/40">Clear History</button>
+      </div>
+      <div id="hofListContainer" class="space-y-2.5"></div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 mt-10">
+    <strong>Player Forge</strong> is an independent, fan-made sports trivia and attribute drafting simulation. Not affiliated with or endorsed by the NBA, NFL, FIFA, ATP, WTA, or any players association.
+  </footer>
+
+<script>
+// ==========================================
+// 100+ ATHLETE DATABASE ACROSS 4 LEAGUES
+// ==========================================
+const LEAGUES_DATA = {
+  "🏀 Pro Basketball": {
+    icon: "🏀",
+    attributes: ["Inside Scoring", "3PT & Shooting", "Playmaking & IQ", "Perimeter Defense", "Rebounding & Size", "Clutch Gene"],
+    statLabels: ["Prime PPG", "Prime RPG", "Prime APG"],
+    athletes: [
+      { name: "Michael Jordan", safe: "His Airness #23", team: "CHI", tier: "GOAT", hint: "6x Finals MVP, Scoring & Lockdown God", vals: [99, 88, 91, 99, 84, 99] },
+      { name: "LeBron James", safe: "The Akron King #23", team: "LAL", tier: "GOAT", hint: "All-Time Scoring Leader & Complete Freight Train", vals: [99, 88, 99, 93, 92, 97] },
+      { name: "Stephen Curry", safe: "The Golden Chef #30", team: "GSW", tier: "GOAT", hint: "Greatest Shooter Ever, Smaller Frame Inside", vals: [91, 99, 94, 82, 72, 98] },
+      { name: "Nikola Jokić", safe: "The Sombor Joker #15", team: "DEN", tier: "GOAT", hint: "Point-Center Triple-Double Machine", vals: [97, 92, 99, 80, 97, 96] },
+      { name: "Kobe Bryant", safe: "Black Mamba #24", team: "LAL", tier: "GOAT", hint: "81-Point Assassin & Relentless Closer", vals: [98, 91, 89, 96, 80, 99] },
+      { name: "Kevin Durant", safe: "Slim Reaper #35", team: "PHX", tier: "GOAT", hint: "7-Foot 50/40/90 Walking Bucket", vals: [97, 98, 88, 89, 86, 97] },
+      { name: "Larry Bird", safe: "French Lick Legend #33", team: "BOS", tier: "GOAT", hint: "Trash-Talking Shooting & Passing Legend", vals: [94, 98, 97, 88, 92, 99] },
+      { name: "Magic Johnson", safe: "Showtime General #32", team: "LAL", tier: "GOAT", hint: "6'9\" Point Guard Maestro", vals: [92, 84, 99, 85, 90, 96] },
+      { name: "Tim Duncan", safe: "Big Fundamental #21", team: "SAS", tier: "GOAT", hint: "5-Ring Bank-Shot & Defensive Anchor", vals: [96, 76, 88, 94, 98, 96] },
+      { name: "Luka Dončić", safe: "Luka Magic #77", team: "DAL", tier: "STAR", hint: "Offensive Heliocentric Genius, Slow Footwork on D", vals: [96, 94, 99, 74, 90, 97] },
+      { name: "Shai Gilgeous-Alexander", safe: "Mid-Range Maestro #2", team: "OKC", tier: "STAR", hint: "Slithery Two-Way Scoring Guard", vals: [97, 89, 91, 93, 78, 95] },
+      { name: "Anthony Edwards", safe: "Ant-Man Posterizer #5", team: "MIN", tier: "STAR", hint: "Explosive Rim Attacker & Two-Way Wing", vals: [96, 90, 86, 93, 82, 94] },
+      { name: "Jayson Tatum", safe: "Boston Franchise Wing #0", team: "BOS", tier: "STAR", hint: "Well-Rounded Championship Two-Way Forward", vals: [93, 91, 89, 92, 89, 91] },
+      { name: "Damian Lillard", safe: "Logo Dame Time #0", team: "MIL", tier: "STAR", hint: "40-Foot Buzzer-Beater Specialist, Weak Defense", vals: [91, 98, 92, 72, 70, 99] },
+      { name: "Kyrie Irving", safe: "Uncle Drew Handles #11", team: "DAL", tier: "STAR", hint: "Unmatched Finishing & Game 7 Dagger", vals: [97, 95, 92, 78, 72, 98] },
+      { name: "Kawhi Leonard", safe: "The Klaw #2", team: "LAC", tier: "STAR", hint: "Robotic Mid-Range & Lockdown Perimeter Thief", vals: [95, 92, 85, 99, 88, 96] },
+      { name: "Shaquille O'Neal", safe: "The Big Diesel #34", team: "LAL", tier: "SPEC", hint: "99 Paint Dominance & Rebounding, 45 Shooting!", vals: [99, 45, 76, 80, 99, 90] },
+      { name: "Giannis Antetokounmpo", safe: "The Greek Freak #34", team: "MIL", tier: "SPEC", hint: "Unstoppable Paint & Defense, Shaky Jumper", vals: [99, 68, 89, 96, 98, 93] },
+      { name: "Victor Wembanyama", safe: "The 7-4 Alien #1", team: "SAS", tier: "SPEC", hint: "8-Foot Wingspan Defensive & Rebounding Phenom", vals: [92, 86, 84, 99, 98, 89] },
+      { name: "Dennis Rodman", safe: "The Worm #91", team: "CHI", tier: "SPEC", hint: "99 Rebounding & Defense, Refuses to Shoot!", vals: [58, 42, 68, 99, 99, 82] },
+      { name: "Rudy Gobert", safe: "The Stifle Tower #27", team: "MIN", tier: "SPEC", hint: "4x DPOY Rebounder, Zero Jumper", vals: [84, 35, 62, 88, 98, 65] },
+      { name: "Kyle Korver", safe: "Catch & Shoot Sniper #26", team: "ATL", tier: "SPEC", hint: "98 Three-Point Laser, Limited Everywhere Else", vals: [72, 98, 74, 70, 65, 82] },
+      { name: "Ben Simmons", safe: "Pass-First Point Forward #10", team: "PHI", tier: "SPEC", hint: "Elite Playmaking & Perimeter D, Allergic to Shooting!", vals: [80, 32, 92, 95, 88, 42] },
+      { name: "Kwame Brown", safe: "Draft Bust #1", team: "WAS", tier: "TRAP", hint: "Small Hands & Butterfingers Under Pressure", vals: [62, 40, 50, 68, 72, 45] },
+      { name: "Brian Scalabrine", safe: "The White Mamba #44", team: "BOS", tier: "TRAP", hint: "Human Victory Cigar & Bench Meme Legend", vals: [66, 78, 68, 62, 64, 75] },
+      { name: "Smush Parker", safe: "Backcourt Bystander #1", team: "LAL", tier: "TRAP", hint: "Famous for Combining with Kobe for 94 Points", vals: [68, 70, 69, 60, 55, 52] }
+    ]
+  },
+  "🏈 Pro Football": {
+    icon: "🏈",
+    attributes: ["Passing Accuracy", "Arm Strength & Deep Ball", "Rushing & Elusiveness", "Receiving & Hands", "Football IQ & Defense", "2-Minute Clutch Drive"],
+    statLabels: ["Total Yds/Yr", "Total TDs/Yr", "All-Pro Honors"],
+    athletes: [
+      { name: "Tom Brady", safe: "The 7-Ring GOAT #12", team: "NE", tier: "GOAT", hint: "99 IQ, Accuracy & Clutch, Statue in the Pocket", vals: [99, 92, 54, 65, 99, 99] },
+      { name: "Patrick Mahomes", safe: "Showtime Grim Reaper #15", team: "KC", tier: "GOAT", hint: "No-Look Rocket Arm, Scrambling & OT Magic", vals: [97, 99, 91, 78, 96, 99] },
+      { name: "Jerry Rice", safe: "The 80 Route God", team: "SF", tier: "GOAT", hint: "Untouchable Receiving Records & Stamina", vals: [75, 72, 92, 99, 98, 99] },
+      { name: "Peyton Manning", safe: "The Omaha Sheriff #18", team: "IND", tier: "GOAT", hint: "5x MVP Field General, Zero Mobility", vals: [99, 93, 52, 60, 99, 95] },
+      { name: "Lamar Jackson", safe: "Action Jackson #8", team: "BAL", tier: "STAR", hint: "99 Human Joystick Rushing & Deep Flick", vals: [91, 94, 99, 82, 91, 92] },
+      { name: "Josh Allen", safe: "Buffalo Hurdle Tank #17", team: "BUF", tier: "STAR", hint: "99 Howitzer Arm & Bulldozer Dual-Threat", vals: [91, 99, 95, 78, 89, 95] },
+      { name: "Joe Burrow", safe: "Joe Shiesty #9", team: "CIN", tier: "STAR", hint: "Ice-Vein Pocket Surgeon & 4th Down Closer", vals: [97, 90, 82, 74, 96, 98] },
+      { name: "Randy Moss", safe: "The Freak #84", team: "MIN", tier: "GOAT", hint: "'You Got Mossed!' 99 Deep Ball Hands & Speed", vals: [70, 82, 95, 99, 88, 94] },
+      { name: "Calvin Johnson", safe: "Megatron #81", team: "DET", tier: "GOAT", hint: "Triple-Covered Jump Ball Monster", vals: [70, 78, 92, 99, 90, 95] },
+      { name: "Justin Jefferson", safe: "Jettas Griddy King #18", team: "MIN", tier: "STAR", hint: "Acrobatic Route Technician & Elite Hands", vals: [75, 74, 93, 99, 92, 95] },
+      { name: "Ja'Marr Chase", safe: "Always Open #1", team: "CIN", tier: "STAR", hint: "Explosive YAC & Deep Threat Receiver", vals: [72, 74, 95, 98, 90, 95] },
+      { name: "Tyreek Hill", safe: "The Cheetah #10", team: "MIA", tier: "STAR", hint: "99 Track Speed & Deep Separation", vals: [70, 72, 99, 96, 86, 92] },
+      { name: "Christian McCaffrey", safe: "Run CMC #23", team: "SF", tier: "STAR", hint: "1,000/1,000 Rushing & Receiving Swiss Army Knife", vals: [80, 76, 98, 96, 94, 94] },
+      { name: "Barry Sanders", safe: "Lion Ankle-Breaker #20", team: "DET", tier: "GOAT", hint: "Greatest Elusive Runner in Gridiron History", vals: [68, 65, 99, 88, 92, 93] },
+      { name: "Derrick Henry", safe: "King Henry Tractorcito #22", team: "BAL", tier: "SPEC", hint: "98 Stiff-Arm Freight Train & Jump-Pass Threat", vals: [74, 76, 98, 78, 88, 92] },
+      { name: "Saquon Barkley", safe: "Reverse Hurdle Phenom #26", team: "PHI", tier: "STAR", hint: "Home-Run Hitter with Elite Lower-Body Power", vals: [72, 72, 98, 90, 89, 93] },
+      { name: "Travis Kelce", safe: "Big Yeti Tight End #87", team: "KC", tier: "STAR", hint: "Playoff Zone-Finder & Unstoppable Improviser", vals: [78, 76, 86, 98, 96, 98] },
+      { name: "Rob Gronkowski", safe: "Gronk Spike #87", team: "NE", tier: "GOAT", hint: "Dominant Red-Zone & Blocking Tight End", vals: [70, 78, 89, 98, 94, 97] },
+      { name: "Lawrence Taylor", safe: "L.T. #56", team: "NYG", tier: "GOAT", hint: "99 Defensive Terror Who Changed Pass Protection", vals: [55, 65, 90, 75, 99, 97] },
+      { name: "Ed Reed", safe: "Ballhawk Safety #20", team: "BAL", tier: "GOAT", hint: "99 Defensive IQ, Interceptions & Return Threat", vals: [68, 72, 93, 94, 99, 96] },
+      { name: "Deion Sanders", safe: "Prime Time #21", team: "DAL", tier: "GOAT", hint: "99 Lockdown Island, Speed & Two-Way Hands", vals: [70, 70, 99, 95, 99, 96] },
+      { name: "Aaron Donald", safe: "Interior Wrecking Ball #99", team: "LAR", tier: "GOAT", hint: "3x DPOY Who Closes Super Bowls on 4th Down", vals: [55, 65, 86, 70, 99, 98] },
+      { name: "JaMarcus Russell", safe: "70-Yard Kneeling Cannon #2", team: "OAK", tier: "SPEC", hint: "99 Arm Strength, 45 Everything Else!", vals: [52, 99, 50, 50, 42, 45] },
+      { name: "Tim Tebow", safe: "Mile High Miracle #15", team: "DEN", tier: "SPEC", hint: "96 4th-Quarter Magic & Power Run, 55 Passing Accuracy!", vals: [55, 78, 91, 70, 82, 96] },
+      { name: "Nathan Peterman", safe: "5-Interception Half #2", team: "BUF", tier: "TRAP", hint: "Preseason Hall of Famer, Regular Season Pick-Six Machine", vals: [54, 62, 60, 55, 48, 40] }
+    ]
+  },
+  "⚽ World Soccer": {
+    icon: "⚽",
+    attributes: ["Clinical Finishing", "Dribbling & Flair", "Vision & Passing", "Defensive Workrate", "Pace & Stamina", "Big Match Clutch"],
+    statLabels: ["Goals/Yr", "Assists/Yr", "Major Trophies"],
+    athletes: [
+      { name: "Lionel Messi", safe: "La Pulga #10", team: "ARG", tier: "GOAT", hint: "8x Ballon d'Or Alien Playmaker & Finisher", vals: [99, 99, 99, 62, 89, 99] },
+      { name: "Cristiano Ronaldo", safe: "CR7 Apex Predator #7", team: "POR", tier: "GOAT", hint: "900+ Goals, Champions League Clutch God", vals: [99, 94, 87, 72, 97, 99] },
+      { name: "Pelé", safe: "O Rei #10", team: "BRA", tier: "GOAT", hint: "3x World Cup Winner & Complete Attacker", vals: [99, 97, 95, 78, 95, 99] },
+      { name: "Diego Maradona", safe: "El Pibe de Oro #10", team: "ARG", tier: "GOAT", hint: "1986 World Cup Solo-Goal Magician", vals: [95, 99, 98, 68, 91, 99] },
+      { name: "Zinedine Zidane", safe: "Zizou Maestro #5", team: "FRA", tier: "GOAT", hint: "Velvet First Touch, Vision & Final Volleys", vals: [91, 97, 99, 82, 85, 98] },
+      { name: "Ronaldo Nazário", safe: "O Fenômeno R9", team: "BRA", tier: "GOAT", hint: "Unstoppable Explosive Dribbling & Rounding Keepers", vals: [99, 99, 86, 55, 97, 97] },
+      { name: "Ronaldinho", safe: "Joga Bonito Magician #10", team: "BRA", tier: "GOAT", hint: "99 Elastico Flair & Bernabéu Standing Ovation", vals: [92, 99, 96, 58, 91, 95] },
+      { name: "Johan Cruyff", safe: "Total Football Prophet #14", team: "NED", tier: "GOAT", hint: "The Cruyff Turn & Tactical Mastermind", vals: [94, 98, 99, 78, 93, 96] },
+      { name: "Kylian Mbappé", safe: "Bondy Rocket #7", team: "FRA", tier: "STAR", hint: "World Cup Final Hat-Trick & 99 Blistering Pace", vals: [97, 96, 86, 60, 99, 98] },
+      { name: "Erling Haaland", safe: "The Nordic Cyborg #9", team: "NOR", tier: "SPEC", hint: "99 Goal Poacher & Sprint Power, Low Link-Up Play", vals: [99, 78, 74, 68, 96, 94] },
+      { name: "Jude Bellingham", safe: "Hey Jude #5", team: "ENG", tier: "STAR", hint: "95th-Minute Box-to-Box Clutch Midfielder", vals: [91, 91, 92, 90, 93, 97] },
+      { name: "Vinícius Júnior", safe: "Baila Vini #7", team: "BRA", tier: "STAR", hint: "UCL Knockout Dribbler, Pace & Big-Game Closer", vals: [92, 98, 89, 68, 98, 97] },
+      { name: "Lamine Yamal", safe: "La Masia Wonderkid #19", team: "ESP", tier: "STAR", hint: "Teenage Euro Champion Wing Wizard", vals: [89, 97, 95, 72, 94, 94] },
+      { name: "Kevin De Bruyne", safe: "King Kev Assist Machine #17", team: "BEL", tier: "STAR", hint: "99 Laser Through-Balls & Crossing", vals: [90, 89, 99, 78, 85, 94] },
+      { name: "Luka Modrić", safe: "Trivela Maestro #10", team: "CRO", tier: "GOAT", hint: "6x UCL Midfield Engine & Endless Stamina", vals: [84, 94, 99, 91, 93, 97] },
+      { name: "Andrés Iniesta", safe: "El Ilusionista #8", team: "ESP", tier: "GOAT", hint: "World Cup Final Winner & Tight-Space Genius", vals: [85, 98, 99, 82, 88, 98] },
+      { name: "Rodri", safe: "Untucked Shirt Anchor #16", team: "ESP", tier: "STAR", hint: "Ballon d'Or Defensive Midfielder & Late Bangers", vals: [86, 88, 95, 98, 90, 97] },
+      { name: "N'Golo Kanté", safe: "Covers 30% of Earth #7", team: "FRA", tier: "SPEC", hint: "99 Defensive Workrate & Endless Lungs", vals: [72, 84, 85, 99, 99, 93] },
+      { name: "Paolo Maldini", safe: "Il Capitano #3", team: "ITA", tier: "GOAT", hint: "Greatest Defender of All Time", vals: [70, 82, 88, 99, 93, 97] },
+      { name: "Virgil van Dijk", safe: "The Anfield Colossus #4", team: "NED", tier: "STAR", hint: "99 Defensive Aura & Long Diagonal Passing", vals: [76, 78, 88, 99, 91, 94] },
+      { name: "Sergio Ramos", safe: "92:48 Header King #4", team: "ESP", tier: "STAR", hint: "Elite Defender with 99 Clutch Final Headers", vals: [86, 78, 84, 96, 90, 99] },
+      { name: "Gareth Bale", safe: "Golf & Bicycle Kick #11", team: "WAL", tier: "STAR", hint: "99 Sprint Speed & Champions League Final Bangers", vals: [94, 92, 86, 76, 99, 98] },
+      { name: "Adama Traoré", safe: "Baby-Oil Speed Demon #11", team: "ESP", tier: "SPEC", hint: "99 Pace & 94 Dribbling, 58 Finishing into Row Z!", vals: [58, 94, 65, 72, 99, 62] },
+      { name: "Nicklas Bendtner", safe: "Lord Bendtner #52", team: "DEN", tier: "TRAP", hint: "100 Confidence in Interviews, 70 on the Pitch", vals: [72, 64, 62, 52, 68, 75] },
+      { name: "Antony", safe: "360 Fidget Spinner #21", team: "BRA", tier: "TRAP", hint: "88 Flashy Spins, Low End Product", vals: [68, 88, 70, 68, 84, 62] }
+    ]
+  },
+  "🎾 Pro Tennis": {
+    icon: "🎾",
+    attributes: ["Forehand Power", "Backhand Precision", "Serve & Aces", "Net Volley & Touch", "Court Speed & Stamina", "Tiebreak Mental Clutch"],
+    statLabels: ["Grand Slams", "Career Win %", "Weeks at #1"],
+    athletes: [
+      { name: "Novak Djokovic", safe: "The Belgrade Elastic Wall", team: "SRB", tier: "GOAT", hint: "24 Slams, 99 Backhand, Speed & Tiebreak God", vals: [96, 99, 94, 90, 99, 99] },
+      { name: "Roger Federer", safe: "The Swiss Maestro", team: "SUI", tier: "GOAT", hint: "Liquid Forehand, Precision Serve & 99 Net Grace", vals: [99, 92, 97, 99, 94, 95] },
+      { name: "Rafael Nadal", safe: "The King of Clay", team: "ESP", tier: "GOAT", hint: "14 Roland Garros Titles, Heavy Topspin & 99 Fight", vals: [99, 95, 89, 92, 99, 99] },
+      { name: "Serena Williams", safe: "The 23-Slam Queen", team: "USA", tier: "GOAT", hint: "Greatest Serve & Power Baseline Game Ever", vals: [99, 96, 99, 90, 93, 99] },
+      { name: "Carlos Alcaraz", safe: "Carlitos Drop-Shot Phenom", team: "ESP", tier: "STAR", hint: "100mph Forehand, Feather Touch & 5-Set Stamina", vals: [98, 93, 91, 97, 99, 97] },
+      { name: "Jannik Sinner", safe: "The San Candido Laser", team: "ITA", tier: "STAR", hint: "Cleanest Ball-Striker on Both Wings Under Pressure", vals: [97, 98, 94, 88, 95, 96] },
+      { name: "Pete Sampras", safe: "Pistol Pete", team: "USA", tier: "GOAT", hint: "99 Clutch Second Serve & Slam Dunk Smash", vals: [95, 84, 99, 98, 91, 98] },
+      { name: "Andre Agassi", safe: "The Vegas Punisher", team: "USA", tier: "GOAT", hint: "Career Golden Slam & Pure Baseline Ball-Striking", vals: [96, 98, 86, 84, 90, 95] },
+      { name: "Steffi Graf", safe: "Fräulein Forehand", team: "GER", tier: "GOAT", hint: "99 Inside-Out Forehand, Footwork & Slice", vals: [99, 93, 91, 92, 99, 98] },
+      { name: "Iga Świątek", safe: "The Warsaw Bakery (6-0)", team: "POL", tier: "STAR", hint: "Heavy Topspin, Sliding Movement & Clay Mastery", vals: [96, 95, 86, 86, 98, 94] },
+      { name: "Aryna Sabalenka", safe: "Tiger Baseline Crusher", team: "BLR", tier: "STAR", hint: "Raw Groundstroke Power & Hardcourt Dominance", vals: [98, 94, 93, 84, 90, 93] },
+      { name: "Andy Murray", safe: "Sir Andy Lob Master", team: "GBR", tier: "STAR", hint: "Elite Two-Handed Backhand, Defense & Grit", vals: [89, 97, 86, 92, 97, 95] },
+      { name: "Stan Wawrinka", safe: "Stan The Man (1HBH Rocket)", team: "SUI", tier: "SPEC", hint: "99 One-Handed Backhand Howitzer in Grand Slam Finals", vals: [94, 99, 92, 85, 88, 96] },
+      { name: "Björn Borg", safe: "The Ice Borg", team: "SWE", tier: "GOAT", hint: "11 Slams, Ice-Cold Pulse & Endless Stamina", vals: [94, 95, 88, 86, 99, 99] },
+      { name: "John McEnroe", safe: "'You Cannot Be Serious!'", team: "USA", tier: "GOAT", hint: "99 Serve-and-Volley Touch & Left-Handed Angles", vals: [88, 89, 94, 99, 92, 92] },
+      { name: "Martina Navratilova", safe: "167-Title Volley GOAT", team: "USA", tier: "GOAT", hint: "Unmatched Net Coverage & 99 Volley Mastery", vals: [93, 94, 95, 99, 97, 97] },
+      { name: "Daniil Medvedev", safe: "The Hardcourt Octopus", team: "RUS", tier: "STAR", hint: "Stands 15 Feet Behind Baseline & Returns Everything", vals: [88, 96, 93, 80, 97, 93] },
+      { name: "John Isner", safe: "70-68 Marathon Servebot", team: "USA", tier: "SPEC", hint: "All-Time Aces Leader (99 Serve), 68 Movement!", vals: [91, 74, 99, 84, 68, 92] },
+      { name: "Ivo Karlović", safe: "6'11\" Ace Doctor", team: "CRO", tier: "SPEC", hint: "99 Unreturnable Serve, 62 Baseline Rallies!", vals: [82, 62, 99, 88, 64, 88] },
+      { name: "Juan Martín del Potro", safe: "The Tower of Tandil", team: "ARG", tier: "SPEC", hint: "99 Fearhand Nuclear Missile, Wrist-Limited Backhand", vals: [99, 78, 93, 85, 84, 94] },
+      { name: "Gaël Monfils", safe: "La Monf 360 Showman", team: "FRA", tier: "SPEC", hint: "99 Diving Speed & Trick Shots, Plays for the Crowd", vals: [92, 89, 91, 88, 99, 78] },
+      { name: "Nick Kyrgios", safe: "Underarm Serve Maverick", team: "AUS", tier: "SPEC", hint: "98 Serve & Touch Talent, Volatile Meltdown Risk", vals: [93, 91, 98, 95, 82, 62] },
+      { name: "Bernard Tomic", safe: "8-Second Match Point Tank", team: "AUS", tier: "TRAP", hint: "Returned Serve with the Handle of His Racket", vals: [72, 70, 78, 74, 52, 38] }
+    ]
+  }
+};
+
+// ==========================================
+// APPLICATION STATE
+// ==========================================
+let state = {
+  league: "🏀 Pro Basketball",
+  mode: "free",
+  roomCode: "GOAT26",
+  blindMode: true,
+  safeMode: false,
+  prospectName: "Apex Prospect",
+  assignedSlots: [null, null, null, null, null, null],
+  currentSpun: null,
+  spinStep: 0,
+  skipTokens: 1,
+  autoTokens: 1,
+  swapTokens: 1,
+  drawnNames: new Set(),
+  leaderboard: JSON.parse(localStorage.getItem("pf_leaderboard_v2") || "[]")
+};
+
+// ==========================================
+// DETERMINISTIC RNG HELPER
+// ==========================================
+function hashString(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function pickAthleteFromPool(pool) {
+  const available = pool.filter(a => !state.drawnNames.has(a.name));
+  const list = available.length > 0 ? available : pool;
+
+  if (state.mode === "free") {
+    return list[Math.floor(Math.random() * list.length)];
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const seedKey = state.mode === "daily"
+    ? `DAILY_${today}_${state.league}_${state.spinStep}`
+    : `ROOM_${state.roomCode.toUpperCase()}_${state.league}_${state.spinStep}`;
+  const idx = hashString(seedKey) % list.length;
+  return list[idx];
+}
+
+// ==========================================
+// CORE ACTIONS
+// ==========================================
+function setLeague(lg) {
+  state.league = lg;
+  resetGame();
+}
+
+function resetGame() {
+  state.assignedSlots = [null, null, null, null, null, null];
+  state.currentSpun = null;
+  state.spinStep = 0;
+  state.skipTokens = 1;
+  state.autoTokens = 1;
+  state.swapTokens = 1;
+  state.drawnNames = new Set();
+  renderAll();
+}
+
+function toggleBlindMode() {
+  state.blindMode = !state.blindMode;
+  renderAll();
+}
+
+function toggleSafeMode() {
+  state.safeMode = !state.safeMode;
+  renderAll();
+}
+
+function changeMode() {
+  const sel = document.getElementById("modeSelect").value;
+  state.mode = sel;
+  const codeInp = document.getElementById("roomCodeInput");
+  if (sel === "room") codeInp.classList.remove("hidden");
+  else codeInp.classList.add("hidden");
+  resetGame();
+}
+
+function changeRoomCode() {
+  state.roomCode = document.getElementById("roomCodeInput").value || "GOAT26";
+  resetGame();
+}
+
+function updateProspectName() {
+  state.prospectName = document.getElementById("prospectNameInput").value || "Apex Prospect";
+  document.getElementById("boardTitle").textContent = `🛠️ ${state.prospectName}'s 6-Tool Blueprint`;
+  if (state.assignedSlots.every(s => s !== null)) renderCareerSim();
+}
+
+function spinAthlete() {
+  if (state.currentSpun !== null) return;
+  const pool = LEAGUES_DATA[state.league].athletes;
+  const drawn = pickAthleteFromPool(pool);
+  state.currentSpun = drawn;
+  state.drawnNames.add(drawn.name);
+  state.spinStep++;
+  renderAll();
+}
+
+function useSkipToken() {
+  if (!state.currentSpun || state.skipTokens <= 0) return;
+  state.skipTokens--;
+  state.currentSpun = null;
+  spinAthlete();
+}
+
+function useAutoToken() {
+  if (!state.currentSpun || state.autoTokens <= 0) return;
+  let bestIdx = -1;
+  let bestVal = -1;
+  for (let i = 0; i < 6; i++) {
+    if (state.assignedSlots[i] === null && state.currentSpun.vals[i] > bestVal) {
+      bestVal = state.currentSpun.vals[i];
+      bestIdx = i;
+    }
+  }
+  if (bestIdx !== -1) {
+    state.assignedSlots[bestIdx] = state.currentSpun;
+    state.currentSpun = null;
+    state.autoTokens--;
+    renderAll();
+  }
+}
+
+function assignSlot(idx) {
+  if (!state.currentSpun || state.assignedSlots[idx] !== null) return;
+  state.assignedSlots[idx] = state.currentSpun;
+  state.currentSpun = null;
+  renderAll();
+}
+
+function swapSlot(idx) {
+  if (!state.currentSpun || state.swapTokens <= 0) return;
+  state.assignedSlots[idx] = state.currentSpun;
+  state.currentSpun = null;
+  state.swapTokens--;
+  renderAll();
+}
+
+function switchMainView(view) {
+  ["arena", "dex", "hof"].forEach(v => {
+    const el = document.getElementById("view" + v.charAt(0).toUpperCase() + v.slice(1));
+    const btn = document.getElementById("tabBtn" + v.charAt(0).toUpperCase() + v.slice(1));
+    if (v === view) {
+      el.classList.remove("hidden");
+      btn.className = "text-indigo-400 font-bold underline";
+    } else {
+      el.classList.add("hidden");
+      btn.className = "text-slate-400 hover:text-white font-semibold";
+    }
+  });
+  if (view === "dex") renderDex();
+  if (view === "hof") renderHof();
+}
+
+// ==========================================
+// RENDERING ENGINE
+// ==========================================
+function renderAll() {
+  renderLeagueTabs();
+  renderHeaderControls();
+  renderSpinBanner();
+  renderBoardAndRadar();
+  renderCareerSim();
+}
+
+function renderLeagueTabs() {
+  const container = document.getElementById("leagueTabs");
+  container.innerHTML = Object.keys(LEAGUES_DATA).map(lg => {
+    const active = lg === state.league;
+    return `<button onclick="setLeague('${lg}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+      active
+        ? "bg-indigo-600 text-white shadow"
+        : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+    }">${lg}</button>`;
+  }).join("");
+}
+
+function renderHeaderControls() {
+  const blindBtn = document.getElementById("blindToggleBtn");
+  blindBtn.textContent = state.blindMode ? "🕶️ Blind Mode: ON" : "👁️ Scouted Mode: ON";
+  blindBtn.className = state.blindMode
+    ? "px-3 py-1.5 rounded-lg font-bold border border-indigo-500/40 bg-indigo-950/60 text-indigo-300"
+    : "px-3 py-1.5 rounded-lg font-bold border border-amber-500/40 bg-amber-950/60 text-amber-300";
+
+  const safeBtn = document.getElementById("safeToggleBtn");
+  safeBtn.textContent = state.safeMode ? "🛡️ Names: Safe Mode" : "🛡️ Names: Real";
+
+  const filled = state.assignedSlots.filter(s => s !== null);
+  document.getElementById("telemetrySlots").textContent = `${filled.length} / 6`;
+
+  if (filled.length > 0) {
+    const sum = state.assignedSlots.reduce((acc, s, i) => acc + (s ? s.vals[i] : 0), 0);
+    document.getElementById("telemetryOvr").textContent = Math.round(sum / filled.length);
+  } else {
+    document.getElementById("telemetryOvr").textContent = "--";
+  }
+
+  document.getElementById("hofCount").textContent = state.leaderboard.length;
+
+  // Spin buttons state
+  const spinBtn = document.getElementById("spinBtn");
+  const skipBtn = document.getElementById("skipBtn");
+  const autoBtn = document.getElementById("autoBtn");
+
+  if (filled.length === 6) {
+    spinBtn.textContent = "✅ ALL 6 SLOTS FORGED";
+    spinBtn.disabled = true;
+  } else {
+    spinBtn.textContent = `🎰 SPIN ATHLETE #${filled.length + 1}`;
+    spinBtn.disabled = state.currentSpun !== null;
+  }
+
+  skipBtn.textContent = `⏭️ Skip Player (${state.skipTokens} left)`;
+  skipBtn.disabled = !state.currentSpun || state.skipTokens <= 0;
+
+  autoBtn.textContent = `🤖 Auto-Best Slot (${state.autoTokens} left)`;
+  autoBtn.disabled = !state.currentSpun || state.autoTokens <= 0;
+
+  document.getElementById("swapTokenBadge").textContent =
+    state.swapTokens > 0 ? "🔄 1 Overwrite Swap Token Available" : "🔒 Swap Token Used";
+}
+
+function renderSpinBanner() {
+  const container = document.getElementById("spunBannerContainer");
+  const ath = state.currentSpun;
+  const filledCount = state.assignedSlots.filter(s => s !== null).length;
+
+  if (!ath) {
+    if (filledCount < 6) {
+      container.innerHTML = `
+        <div class="border border-slate-800 bg-slate-900/50 rounded-xl p-4 text-center text-sm text-slate-400">
+          👆 Click <strong class="text-white">SPIN ATHLETE #${filledCount + 1}</strong> above to draw a player, then select an open skill card below!
+        </div>`;
+    } else {
+      container.innerHTML = "";
+    }
+    return;
+  }
+
+  const dispName = state.safeMode ? ath.safe : ath.name;
+  const tierStyles = {
+    GOAT: "bg-yellow-300 text-yellow-950",
+    STAR: "bg-sky-300 text-sky-950",
+    SPEC: "bg-emerald-300 text-emerald-950",
+    TRAP: "bg-rose-300 text-rose-950"
+  };
+  const tierLabels = {
+    GOAT: "👑 GOAT LEGEND",
+    STAR: "🌟 SUPERSTAR",
+    SPEC: "🎯 HIGH-VARIANCE SPECIALIST",
+    TRAP: "⚠️ DANGER TRAP"
+  };
+
+  const attrs = LEAGUES_DATA[state.league].attributes;
+  const previewPills = attrs.map((attr, idx) => {
+    const isOpen = state.assignedSlots[idx] === null;
+    const valStr = state.blindMode ? (isOpen ? "??" : "🔒") : ath.vals[idx];
+    return `
+      <div class="bg-slate-900/90 border border-slate-700/80 rounded-lg p-2 text-center">
+        <div class="text-[10px] text-slate-400 uppercase font-bold truncate">${attr}</div>
+        <div class="text-base font-black text-indigo-300 mt-0.5">${valStr}</div>
+      </div>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="spin-banner rounded-2xl p-5">
+      <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase ${tierStyles[ath.tier]}">
+        ${tierLabels[ath.tier]}
+      </span>
+      <h2 class="text-2xl font-black text-white mt-1">${dispName} <span class="text-base font-semibold text-slate-400">(${ath.team})</span></h2>
+      <p class="text-xs text-indigo-200 mt-1 mb-4"><strong>Scouting Hint:</strong> ${ath.hint}</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+        ${previewPills}
+      </div>
+    </div>`;
+}
+
+function renderBoardAndRadar() {
+  const attrs = LEAGUES_DATA[state.league].attributes;
+  const grid = document.getElementById("slotsGrid");
+
+  grid.innerHTML = attrs.map((attr, idx) => {
+    const assigned = state.assignedSlots[idx];
+    if (assigned) {
+      const aName = state.safeMode ? assigned.safe : assigned.name;
+      const val = assigned.vals[idx];
+      const cls = val >= 94 ? "filled-elite" : (val >= 80 ? "filled-good" : "filled-trap");
+      const color = val >= 94 ? "text-yellow-400" : (val >= 80 ? "text-sky-400" : "text-rose-400");
+
+      const swapBtn = (state.currentSpun && state.swapTokens > 0)
+        ? `<button onclick="swapSlot(${idx})" class="mt-2.5 w-full py-1 rounded bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold hover:bg-amber-500/30">
+             🔄 Overwrite Slot
+           </button>`
+        : "";
+
+      return `
+        <div class="slot-card ${cls} rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold uppercase text-slate-300">${idx + 1}. ${attr}</div>
+            <div class="text-4xl font-black ${color} my-2">${val}</div>
+            <div class="text-xs font-bold text-white truncate">${aName}</div>
+            <div class="text-[11px] text-slate-400">Team: ${assigned.team}</div>
+          </div>
+          ${swapBtn}
+        </div>`;
+    } else {
+      const canClick = state.currentSpun !== null;
+      const btnText = canClick
+        ? (state.blindMode ? "⚡ Lock In Slot" : `⚡ Lock In (${state.currentSpun.vals[idx]})`)
+        : "Waiting for Spin";
+
+      return `
+        <div onclick="${canClick ? `assignSlot(${idx})` : ""}" class="slot-card ${canClick ? "open-active" : ""} rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold uppercase text-slate-400">${idx + 1}. ${attr}</div>
+            <div class="text-xl font-black text-slate-600 my-4">OPEN SLOT</div>
+          </div>
+          <button ${!canClick ? "disabled" : ""} class="w-full py-2 rounded-lg text-xs font-bold ${
+            canClick
+              ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow"
+              : "bg-slate-800 text-slate-500 cursor-not-allowed"
+          }">${btnText}</button>
+        </div>`;
+    }
+  }).join("");
+
+  // Render Radar SVG
+  const vals = state.assignedSlots.map((s, i) => (s ? s.vals[i] : 0));
+  document.getElementById("radarContainer").innerHTML = buildRadarSvg(attrs, vals);
+}
+
+function buildRadarSvg(labels, values) {
+  const size = 290, cx = size / 2, cy = size / 2, maxR = 95;
+  let grids = "";
+  [25, 50, 75, 100].forEach(level => {
+    const r = maxR * (level / 100);
+    const pts = [];
+    for (let i = 0; i < 6; i++) {
+      const ang = (i * 60 - 90) * (Math.PI / 180);
+      pts.push(`${(cx + r * Math.cos(ang)).toFixed(1)},${(cy + r * Math.sin(ang)).toFixed(1)}`);
+    }
+    grids += `<polygon points="${pts.join(" ")}" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"/>`;
+  });
+
+  let axes = "", texts = "", dots = "";
+  const polyPts = [];
+  for (let i = 0; i < 6; i++) {
+    const ang = (i * 60 - 90) * (Math.PI / 180);
+    const xEnd = cx + maxR * Math.cos(ang);
+    const yEnd = cy + maxR * Math.sin(ang);
+    axes += `<line x1="${cx}" y1="${cy}" x2="${xEnd.toFixed(1)}" y2="${yEnd.toFixed(1)}" stroke="#475569" stroke-width="1"/>`;
+
+    const lx = cx + (maxR + 26) * Math.cos(ang);
+    const ly = cy + (maxR + 20) * Math.sin(ang);
+    const shortLbl = labels[i].split(" ")[0].toUpperCase();
+    const vStr = values[i] > 0 ? values[i] : "--";
+    texts += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="#cbd5e1" font-size="10" font-weight="bold" text-anchor="middle" dominant-baseline="middle">${shortLbl} (${vStr})</text>`;
+
+    const v = values[i] > 0 ? Math.max(15, values[i]) : 10;
+    const pr = maxR * (v / 100);
+    const px = cx + pr * Math.cos(ang);
+    const py = cy + pr * Math.sin(ang);
+    polyPts.push(`${px.toFixed(1)},${py.toFixed(1)}`);
+    if (values[i] > 0) {
+      dots += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="4" fill="#38bdf8" stroke="#0f172a" stroke-width="1.5"/>`;
+    }
+  }
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    ${grids}${axes}
+    <polygon points="${polyPts.join(" ")}" fill="rgba(56, 189, 248, 0.28)" stroke="#38bdf8" stroke-width="2.5"/>
+    ${dots}${texts}
+  </svg>`;
+}
+
+// ==========================================
+// CAREER SIMULATION & SHARE SCORECARD
+// ==========================================
+function renderCareerSim() {
+  const container = document.getElementById("careerSimContainer");
+  if (state.assignedSlots.some(s => s === null)) {
+    container.classList.add("hidden");
+    return;
+  }
+  container.classList.remove("hidden");
+
+  const rawVals = state.assignedSlots.map((s, i) => s.vals[i]);
+  const baseOvr = Math.floor(rawVals.reduce((a, b) => a + b, 0) / 6);
+
+  // Evaluate Synergies
+  let bonus = 0;
+  const badges = [];
+  const teams = state.assignedSlots.map(s => s.team);
+  const uniqueTeams = new Set(teams);
+  if (uniqueTeams.size === 6) {
+    bonus += 2;
+    badges.push("🌈 Rainbow Draft (+2 OVR: 6 Different Teams)");
+  } else if ([...uniqueTeams].some(t => teams.filter(x => x === t).length >= 3)) {
+    bonus += 2;
+    badges.push("🤝 Franchise Dynasty (+2 OVR: 3+ Same Team)");
+  }
+  if (Math.min(...rawVals) >= 88) {
+    bonus += 1;
+    badges.push("💎 Flawless Blueprint (+1 OVR: All Skills 88+)");
+  }
+  if (rawVals.filter(v => v >= 98).length >= 3) {
+    bonus += 1;
+    badges.push("⚡ Apex Triple-Crown (+1 OVR: 3+ 98/99 Ratings)");
+  }
+
+  const finalOvr = Math.min(99, baseOvr + bonus);
+  const clutch = rawVals[5];
+  const seed = rawVals.reduce((acc, v, i) => acc + v * (i + 13), 0) + finalOvr * 29;
+
+  let tier = "🧢 ROTATION CULT HERO", hof = "2.5%", titles = 0, mvps = 0;
+  if (finalOvr >= 96) {
+    tier = "👑 IMMORTAL GOAT";
+    hof = "100% (First-Ballot Unanimous)";
+    titles = 4 + (seed % 4) + (clutch >= 97 ? 1 : 0);
+    mvps = 3 + (seed % 4);
+  } else if (finalOvr >= 92) {
+    tier = "🏆 FIRST-BALLOT LEGEND";
+    hof = `${Math.min(99.8, 88 + (finalOvr - 90) * 2.1).toFixed(1)}%`;
+    titles = 2 + (seed % 3);
+    mvps = 1 + (seed % 3);
+  } else if (finalOvr >= 87) {
+    tier = "🌟 PERENNIAL ALL-STAR";
+    hof = `${Math.min(84.0, 48 + (finalOvr - 85) * 7.2).toFixed(1)}%`;
+    titles = seed % 3;
+    mvps = seed % 2;
+  } else if (finalOvr >= 80) {
+    tier = "🛡️ SOLID STARTER";
+    hof = "16.4%";
+    titles = seed % 2;
+  }
+
+  const lgCfg = LEAGUES_DATA[state.league];
+  let stats = [];
+  if (state.league.includes("Basketball")) {
+    const ppg = Math.max(7.5, (11 + ((rawVals[0] * 0.55 + rawVals[1] * 0.45) - 60) * 0.58)).toFixed(1);
+    const rpg = Math.max(2.5, (3.2 + (rawVals[4] - 55) * 0.24)).toFixed(1);
+    const apg = Math.max(1.8, (2.0 + (rawVals[2] - 55) * 0.23)).toFixed(1);
+    stats = [`${ppg} PPG`, `${rpg} RPG`, `${apg} APG`];
+  } else if (state.league.includes("Football")) {
+    const yds = Math.max(950, Math.round(1800 + ((rawVals[0] + rawVals[1] + rawVals[2] + rawVals[3]) / 4 - 55) * 90));
+    const tds = Math.max(6, Math.round(12 + ((rawVals[0] + rawVals[3] + rawVals[5]) / 3 - 55) * 0.95));
+    const ap = Math.max(0, Math.round((finalOvr - 82) * 0.65));
+    stats = [`${yds.toLocaleString()} Yds/Yr`, `${tds} TDs/Yr`, `${ap}x All-Pro`];
+  } else if (state.league.includes("Soccer")) {
+    const gls = Math.max(2, Math.round(5 + ((rawVals[0] * 0.7 + rawVals[1] * 0.3) - 55) * 1.05));
+    const ast = Math.max(2, Math.round(4 + (rawVals[2] - 55) * 0.58));
+    const trp = titles * 3 + (seed % 4) + 1;
+    stats = [`${gls} Goals/Yr`, `${ast} Assists/Yr`, `${trp} Trophies`];
+  } else {
+    const slams = Math.max(0, Math.round((finalOvr - 85) * 1.5) + (clutch >= 96 ? 2 : 0));
+    const winPct = Math.min(91.5, Math.max(51.0, 50 + (finalOvr - 70) * 1.45)).toFixed(1);
+    const wks = Math.max(0, Math.round((finalOvr - 87) * 28));
+    titles = slams;
+    stats = [`${slams} Grand Slams`, `${winPct}% Win Rate`, `${wks} Wks at #1`];
+  }
+
+  const bestIdx = rawVals.indexOf(Math.max(...rawVals));
+  const worstIdx = rawVals.indexOf(Math.min(...rawVals));
+  const attrs = lgCfg.attributes;
+
+  const emojiRow = rawVals.map(v => v >= 95 ? "🟨" : (v >= 85 ? "🟦" : (v >= 75 ? "🟩" : "🟥"))).join("");
+  const shareLines = [
+    `⚡ PLAYER FORGE | ${state.league}`,
+    `👤 ${state.prospectName} — ${finalOvr} OVR (${tier})`,
+    `📊 DNA: ${emojiRow}`,
+    ...attrs.map((a, i) => `• ${a}: ${rawVals[i]} (${state.safeMode ? state.assignedSlots[i].safe : state.assignedSlots[i].name})`),
+    `🏆 Titles: ${titles} | HOF: ${hof}`
+  ].join("\n");
+
+  container.innerHTML = `
+    <div class="bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border-2 border-indigo-500/60 rounded-2xl p-6 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
+        <div>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-400">Career Simulation Complete</span>
+          <h2 class="text-2xl font-black text-white mt-0.5">🏆 ${state.prospectName} — ${finalOvr} OVR</h2>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          ${badges.map(b => `<span class="px-3 py-1 rounded-lg bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-xs font-bold">${b}</span>`).join("")}
+        </div>
+      </div>
+
+      <!-- Top 4 KPI Metrics -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-4">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
+          <div class="text-xs text-slate-400">Final Composite OVR</div>
+          <div class="text-2xl font-black text-yellow-400 mt-1">${finalOvr} OVR</div>
+          <div class="text-[11px] text-emerald-400">${bonus > 0 ? `+${bonus} Synergy Boost` : "Base Avg"}</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
+          <div class="text-xs text-slate-400">Legacy Tier</div>
+          <div class="text-base font-black text-white mt-2">${tier}</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
+          <div class="text-xs text-slate-400">Major Titles / Rings</div>
+          <div class="text-2xl font-black text-sky-400 mt-1">${titles}</div>
+          <div class="text-[11px] text-slate-400">${mvps}x League MVPs</div>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
+          <div class="text-xs text-slate-400">Hall of Fame Probability</div>
+          <div class="text-lg font-black text-indigo-300 mt-1.5">${hof}</div>
+        </div>
+      </div>
+
+      <!-- Sport Specific Prime Averages -->
+      <div class="grid grid-cols-3 gap-3.5 mb-6">
+        <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400 uppercase font-bold">${lgCfg.statLabels[0]}</div>
+          <div class="text-lg font-black text-white mt-0.5">${stats[0]}</div>
+        </div>
+        <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400 uppercase font-bold">${lgCfg.statLabels[1]}</div>
+          <div class="text-lg font-black text-white mt-0.5">${stats[1]}</div>
+        </div>
+        <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
+          <div class="text-[11px] text-slate-400 uppercase font-bold">${lgCfg.statLabels[2]}</div>
+          <div class="text-lg font-black text-white mt-0.5">${stats[2]}</div>
+        </div>
+      </div>
+
+      <!-- Storyline & Share Box -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <h4 class="text-sm font-bold text-white mb-2.5">📜 Career Storyline Chronicle</h4>
+          <ul class="space-y-2 text-xs text-slate-300 leading-relaxed">
+            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
+              <strong>Year 1 (Rookie Phenom):</strong> Entered the league with an immediate ${rawVals[bestIdx]}-rated <strong>${attrs[bestIdx]}</strong> weapon, stunning scouts on opening night.
+            </li>
+            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
+              <strong>Year 5 (Peak Prime):</strong> Reached <strong>${finalOvr} OVR</strong>, averaging <strong>${stats[0]}</strong> and <strong>${stats[1]}</strong> across a dominant decade.
+            </li>
+            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
+              <strong>Year 9 (Postseason Legacy):</strong> ${
+                titles > 0
+                  ? `Delivered a legendary ${clutch}-Clutch championship run to capture <strong>${titles} Major Titles</strong>.`
+                  : `Opponents schemed relentlessly against their ${rawVals[worstIdx]}-rated <strong>${attrs[worstIdx]}</strong> in deep playoff series.`
+              }
+            </li>
+            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
+              <strong>Year 15 (Retirement Verdict):</strong> Hung up the jersey with a <strong>${hof}</strong> Hall of Fame probability as a <strong>${tier}</strong>.
+            </li>
+          </ul>
+          <button onclick="saveBuildToHof(${finalOvr}, '${tier}', ${titles}, '${hof}')" class="mt-3 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow">
+            🏛️ Save Build to Leaderboard
+          </button>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-sm font-bold text-white">📲 Group-Chat Share Scorecard</h4>
+            <button onclick="copyShareCard()" id="copyBtn" class="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold">
+              📋 Copy Scorecard
+            </button>
+          </div>
+          <pre id="shareTextPre" class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-200 font-mono whitespace-pre-wrap overflow-x-auto">${shareLines}</pre>
+        </div>
+      </div>
+    </div>`;
+}
+
+function copyShareCard() {
+  const txt = document.getElementById("shareTextPre").textContent;
+  navigator.clipboard.writeText(txt);
+  const btn = document.getElementById("copyBtn");
+  btn.textContent = "✅ Copied!";
+  setTimeout(() => (btn.textContent = "📋 Copy Scorecard"), 2000);
+}
+
+function saveBuildToHof(ovr, tier, titles, hof) {
+  state.leaderboard.push({
+    name: state.prospectName,
+    league: state.league,
+    ovr,
+    tier,
+    titles,
+    hof,
+    date: new Date().toLocaleDateString()
+  });
+  state.leaderboard.sort((a, b) => b.ovr - a.ovr);
+  localStorage.setItem("pf_leaderboard_v2", JSON.stringify(state.leaderboard));
+  document.getElementById("hofCount").textContent = state.leaderboard.length;
+  switchMainView("hof");
+}
+
+function renderDex() {
+  const cfg = LEAGUES_DATA[state.league];
+  document.getElementById("dexTitle").textContent = `📖 ${state.league} Scouting Database (${cfg.athletes.length} Athletes)`;
+  document.getElementById("dexTableHead").innerHTML = `
+    <tr>
+      <th class="p-3">Athlete</th>
+      <th class="p-3">Team</th>
+      <th class="p-3">Tier</th>
+      <th class="p-3">Avg</th>
+      ${cfg.attributes.map(a => `<th class="p-3">${a}</th>`).join("")}
+    </tr>`;
+
+  const sorted = [...cfg.athletes].sort((a, b) => {
+    const avgA = a.vals.reduce((x, y) => x + y, 0);
+    const avgB = b.vals.reduce((x, y) => x + y, 0);
+    return avgB - avgA;
+  });
+
+  document.getElementById("dexTableBody").innerHTML = sorted.map(a => {
+    const avg = Math.round(a.vals.reduce((x, y) => x + y, 0) / 6);
+    const nm = state.safeMode ? a.safe : a.name;
+    return `
+      <tr class="hover:bg-slate-800/50">
+        <td class="p-3 font-bold text-white">${nm}</td>
+        <td class="p-3 text-slate-400">${a.team}</td>
+        <td class="p-3 font-bold text-indigo-300">${a.tier}</td>
+        <td class="p-3 font-black text-yellow-400">${avg}</td>
+        ${a.vals.map(v => `<td class="p-3 ${v >= 95 ? "text-yellow-300 font-bold" : (v < 70 ? "text-rose-400" : "text-slate-300")}">${v}</td>`).join("")}
+      </tr>`;
+  }).join("");
+}
+
+function renderHof() {
+  const container = document.getElementById("hofListContainer");
+  if (state.leaderboard.length === 0) {
+    container.innerHTML = `<div class="p-6 border border-slate-800 rounded-xl text-center text-sm text-slate-400">No builds saved yet. Forge a 6-slot player and click <strong>Save Build to Leaderboard</strong>!</div>`;
+    return;
+  }
+  container.innerHTML = state.leaderboard.map((item, i) => `
+    <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="text-lg font-black text-indigo-400">#${i + 1}</span>
+        <div>
+          <div class="font-bold text-white text-sm">${item.name} <span class="text-xs text-slate-400">(${item.league})</span></div>
+          <div class="text-xs text-slate-400">${item.tier} • ${item.titles} Titles • HOF: ${item.hof}</div>
+        </div>
+      </div>
+      <div class="text-xl font-black text-yellow-400">${item.ovr} OVR</div>
+    </div>`).join("");
+}
+
+function clearLeaderboard() {
+  state.leaderboard = [];
+  localStorage.removeItem("pf_leaderboard_v2");
+  renderHof();
+  renderHeaderControls();
+}
+
+// Boot on load
+renderAll();
+</script>
+</body>
+</html>
