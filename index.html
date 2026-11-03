@@ -94,7 +94,7 @@
         <div><span class="text-slate-400">Slots:</span> <strong id="telemetrySlots" class="text-white">0 / 6</strong></div>
         <div><span class="text-slate-400">Running OVR:</span> <strong id="telemetryOvr" class="text-sky-400">--</strong></div>
         <button onclick="switchMainView('arena')" id="tabBtnArena" class="text-indigo-400 font-bold underline">🏟️ Arena</button>
-        <button onclick="switchMainView('dex')" id="tabBtnDex" class="text-slate-400 hover:text-white font-semibold">📖 Player Dex</button>
+        <button onclick="switchMainView('dex')" id="tabBtnDex" class="text-slate-400 hover:text-white font-semibold">📖 Player Dex (40)</button>
         <button onclick="switchMainView('hof')" id="tabBtnHof" class="text-slate-400 hover:text-white font-semibold">🏛️ Leaderboard (<span id="hofCount">0</span>)</button>
       </div>
     </div>
@@ -177,134 +177,218 @@
 
 <script>
 // ==========================================
-// 100+ ATHLETE DATABASE ACROSS 4 LEAGUES
+// 160-ATHLETE DATABASE (40 PER SPORT)
 // ==========================================
 const LEAGUES_DATA = {
   "🏀 Pro Basketball": {
     icon: "🏀",
     attributes: ["Inside Scoring", "3PT & Shooting", "Playmaking & IQ", "Perimeter Defense", "Rebounding & Size", "Clutch Gene"],
-    statLabels: ["Prime PPG", "Prime RPG", "Prime APG"],
+    primeStatLabels: ["Prime Season PPG", "Prime Season RPG", "Prime Season APG"],
+    careerStatLabels: ["Career Points", "All-NBA Selections", "NBA Championships"],
     athletes: [
-      { name: "Michael Jordan", safe: "His Airness #23", team: "CHI", tier: "GOAT", hint: "6x Finals MVP, Scoring & Lockdown God", vals: [99, 88, 91, 99, 84, 99] },
-      { name: "LeBron James", safe: "The Akron King #23", team: "LAL", tier: "GOAT", hint: "All-Time Scoring Leader & Complete Freight Train", vals: [99, 88, 99, 93, 92, 97] },
-      { name: "Stephen Curry", safe: "The Golden Chef #30", team: "GSW", tier: "GOAT", hint: "Greatest Shooter Ever, Smaller Frame Inside", vals: [91, 99, 94, 82, 72, 98] },
-      { name: "Nikola Jokić", safe: "The Sombor Joker #15", team: "DEN", tier: "GOAT", hint: "Point-Center Triple-Double Machine", vals: [97, 92, 99, 80, 97, 96] },
-      { name: "Kobe Bryant", safe: "Black Mamba #24", team: "LAL", tier: "GOAT", hint: "81-Point Assassin & Relentless Closer", vals: [98, 91, 89, 96, 80, 99] },
-      { name: "Kevin Durant", safe: "Slim Reaper #35", team: "PHX", tier: "GOAT", hint: "7-Foot 50/40/90 Walking Bucket", vals: [97, 98, 88, 89, 86, 97] },
-      { name: "Larry Bird", safe: "French Lick Legend #33", team: "BOS", tier: "GOAT", hint: "Trash-Talking Shooting & Passing Legend", vals: [94, 98, 97, 88, 92, 99] },
-      { name: "Magic Johnson", safe: "Showtime General #32", team: "LAL", tier: "GOAT", hint: "6'9\" Point Guard Maestro", vals: [92, 84, 99, 85, 90, 96] },
+      // GOATs & All-Time Icons
+      { name: "Michael Jordan", safe: "His Airness #23", team: "CHI", tier: "GOAT", hint: "6x Finals MVP, 10x Scoring Champ & Lockdown DPOY", vals: [99, 88, 91, 99, 84, 99] },
+      { name: "LeBron James", safe: "The Akron King #23", team: "LAL", tier: "GOAT", hint: "40K Points, Freight Train Rim Finisher & IQ Genius", vals: [99, 88, 99, 93, 92, 97] },
+      { name: "Stephen Curry", safe: "The Golden Chef #30", team: "GSW", tier: "GOAT", hint: "99 3PT God, Smaller Frame for Rebounding", vals: [91, 99, 94, 82, 72, 98] },
+      { name: "Nikola Jokić", safe: "The Sombor Joker #15", team: "DEN", tier: "GOAT", hint: "Point-Center Triple-Double & Touch Maestro", vals: [98, 92, 99, 80, 98, 97] },
+      { name: "Kobe Bryant", safe: "Black Mamba #24", team: "LAL", tier: "GOAT", hint: "81-Point Assassin & Relentless 4th-Quarter Closer", vals: [98, 91, 89, 96, 80, 99] },
+      { name: "Kevin Durant", safe: "Slim Reaper #35", team: "PHX", tier: "GOAT", hint: "7-Foot 50/40/90 Unblockable Scorer", vals: [97, 98, 88, 89, 86, 97] },
+      { name: "Larry Bird", safe: "French Lick Legend #33", team: "BOS", tier: "GOAT", hint: "3x MVP Trash-Talking Shooting & Passing Legend", vals: [94, 98, 97, 88, 92, 99] },
+      { name: "Magic Johnson", safe: "Showtime General #32", team: "LAL", tier: "GOAT", hint: "6'9\" Point Guard Maestro with 5 Rings", vals: [92, 84, 99, 85, 90, 96] },
       { name: "Tim Duncan", safe: "Big Fundamental #21", team: "SAS", tier: "GOAT", hint: "5-Ring Bank-Shot & Defensive Anchor", vals: [96, 76, 88, 94, 98, 96] },
-      { name: "Luka Dončić", safe: "Luka Magic #77", team: "DAL", tier: "STAR", hint: "Offensive Heliocentric Genius, Slow Footwork on D", vals: [96, 94, 99, 74, 90, 97] },
-      { name: "Shai Gilgeous-Alexander", safe: "Mid-Range Maestro #2", team: "OKC", tier: "STAR", hint: "Slithery Two-Way Scoring Guard", vals: [97, 89, 91, 93, 78, 95] },
+      { name: "Kareem Abdul-Jabbar", safe: "The Skyhook Captain #33", team: "LAL", tier: "GOAT", hint: "6x MVP Unstoppable Skyhook & Interior Giant", vals: [99, 72, 88, 92, 98, 97] },
+      { name: "Hakeem Olajuwon", safe: "The Dream Shake #34", team: "HOU", tier: "GOAT", hint: "All-Time Blocks Leader & Footwork Master", vals: [98, 76, 84, 96, 98, 96] },
+      { name: "Dirk Nowitzki", safe: "One-Legged Fadeaway #41", team: "DAL", tier: "GOAT", hint: "7-Foot Shooting Legend & 2011 Finals Hero", vals: [94, 98, 86, 78, 90, 98] },
+      { name: "Dwyane Wade", safe: "The Flash #3", team: "MIA", tier: "GOAT", hint: "2006 Finals MVP Slasher & Shot-Blocking Guard", vals: [97, 82, 92, 94, 80, 97] },
+      { name: "Kawhi Leonard", safe: "The Klaw #2", team: "LAC", tier: "GOAT", hint: "2x Finals MVP Robotic Mid-Range & Perimeter Thief", vals: [95, 92, 85, 99, 88, 96] },
+      // Modern Superstars
+      { name: "Luka Dončić", safe: "Luka Magic #77", team: "DAL", tier: "STAR", hint: "34 PPG Heliocentric Genius, Vulnerable Perimeter D", vals: [97, 95, 99, 74, 91, 98] },
+      { name: "Shai Gilgeous-Alexander", safe: "Mid-Range Maestro #2", team: "OKC", tier: "STAR", hint: "Slithery Two-Way 30 PPG Scoring Guard", vals: [97, 89, 91, 94, 78, 95] },
       { name: "Anthony Edwards", safe: "Ant-Man Posterizer #5", team: "MIN", tier: "STAR", hint: "Explosive Rim Attacker & Two-Way Wing", vals: [96, 90, 86, 93, 82, 94] },
       { name: "Jayson Tatum", safe: "Boston Franchise Wing #0", team: "BOS", tier: "STAR", hint: "Well-Rounded Championship Two-Way Forward", vals: [93, 91, 89, 92, 89, 91] },
       { name: "Damian Lillard", safe: "Logo Dame Time #0", team: "MIL", tier: "STAR", hint: "40-Foot Buzzer-Beater Specialist, Weak Defense", vals: [91, 98, 92, 72, 70, 99] },
-      { name: "Kyrie Irving", safe: "Uncle Drew Handles #11", team: "DAL", tier: "STAR", hint: "Unmatched Finishing & Game 7 Dagger", vals: [97, 95, 92, 78, 72, 98] },
-      { name: "Kawhi Leonard", safe: "The Klaw #2", team: "LAC", tier: "STAR", hint: "Robotic Mid-Range & Lockdown Perimeter Thief", vals: [95, 92, 85, 99, 88, 96] },
-      { name: "Shaquille O'Neal", safe: "The Big Diesel #34", team: "LAL", tier: "SPEC", hint: "99 Paint Dominance & Rebounding, 45 Shooting!", vals: [99, 45, 76, 80, 99, 90] },
-      { name: "Giannis Antetokounmpo", safe: "The Greek Freak #34", team: "MIL", tier: "SPEC", hint: "Unstoppable Paint & Defense, Shaky Jumper", vals: [99, 68, 89, 96, 98, 93] },
+      { name: "Kyrie Irving", safe: "Uncle Drew Handles #11", team: "DAL", tier: "STAR", hint: "Unmatched Layup Package & Game 7 Dagger", vals: [97, 95, 92, 78, 72, 98] },
+      { name: "James Harden", safe: "The Stepback Beard #13", team: "HOU", tier: "STAR", hint: "36 PPG Scoring & Playmaking Engine, Sleepy Defense", vals: [94, 95, 97, 72, 80, 86] },
+      { name: "Allen Iverson", safe: "The Answer Crossover #3", team: "PHI", tier: "STAR", hint: "Pound-for-Pound Scoring Icon, 6-Foot Rebounding", vals: [96, 86, 90, 88, 65, 96] },
+      { name: "Steve Nash", safe: "2x MVP Sun General #13", team: "PHX", tier: "STAR", hint: "99 Shooting & Passing Efficiency, Hunted on Defense", vals: [88, 98, 99, 68, 66, 93] },
+      { name: "Chris Paul", safe: "The Point God #3", team: "NOP", tier: "STAR", hint: "99 Floor General IQ & Steals, Undersized Rebounder", vals: [88, 91, 99, 95, 70, 92] },
+      { name: "Scottie Pippen", safe: "6-Ring Wing Lockdown #33", team: "CHI", tier: "STAR", hint: "99 Perimeter Defense & Point-Forward Versatility", vals: [91, 84, 93, 99, 90, 90] },
+      { name: "Jimmy Butler", safe: "Playoff Jimmy #22", team: "MIA", tier: "STAR", hint: "98 Clutch Takeover & Gritty Two-Way Wing", vals: [94, 82, 91, 95, 86, 98] },
+      { name: "Joel Embiid", safe: "The Process MVP #21", team: "PHI", tier: "STAR", hint: "33 PPG Scoring Giant, Playoff Conditioning Dip", vals: [98, 89, 84, 90, 96, 84] },
+      // Specialists (Huge 99s mixed with dangerous 30s-60s!)
+      { name: "Shaquille O'Neal", safe: "The Big Diesel #34", team: "LAL", tier: "SPEC", hint: "99 Paint Dominance & Rebounding, 42 Shooting!", vals: [99, 42, 76, 80, 99, 90] },
+      { name: "Giannis Antetokounmpo", safe: "The Greek Freak #34", team: "MIL", tier: "SPEC", hint: "99 Rim Attack, Defense & Rebounding, 66 Jumper", vals: [99, 66, 89, 96, 98, 93] },
       { name: "Victor Wembanyama", safe: "The 7-4 Alien #1", team: "SAS", tier: "SPEC", hint: "8-Foot Wingspan Defensive & Rebounding Phenom", vals: [92, 86, 84, 99, 98, 89] },
-      { name: "Dennis Rodman", safe: "The Worm #91", team: "CHI", tier: "SPEC", hint: "99 Rebounding & Defense, Refuses to Shoot!", vals: [58, 42, 68, 99, 99, 82] },
-      { name: "Rudy Gobert", safe: "The Stifle Tower #27", team: "MIN", tier: "SPEC", hint: "4x DPOY Rebounder, Zero Jumper", vals: [84, 35, 62, 88, 98, 65] },
-      { name: "Kyle Korver", safe: "Catch & Shoot Sniper #26", team: "ATL", tier: "SPEC", hint: "98 Three-Point Laser, Limited Everywhere Else", vals: [72, 98, 74, 70, 65, 82] },
-      { name: "Ben Simmons", safe: "Pass-First Point Forward #10", team: "PHI", tier: "SPEC", hint: "Elite Playmaking & Perimeter D, Allergic to Shooting!", vals: [80, 32, 92, 95, 88, 42] },
+      { name: "Russell Westbrook", safe: "Mr. Triple-Double #0", team: "OKC", tier: "SPEC", hint: "96 Rim Attack, Playmaking & Guard Rebounding, 74 3PT", vals: [96, 74, 96, 84, 94, 88] },
+      { name: "Ray Allen", safe: "Corner-Three Jesus #20", team: "MIA", tier: "SPEC", hint: "99 3PT Shooting & 97 Clutch, Average Size", vals: [88, 99, 84, 82, 74, 97] },
+      { name: "Klay Thompson", safe: "37-Point Quarter #11", team: "GSW", tier: "SPEC", hint: "99 Catch-and-Shoot & 93 Perimeter D, Low Playmaking", vals: [86, 99, 74, 93, 75, 95] },
+      { name: "Dennis Rodman", safe: "The Worm #91", team: "CHI", tier: "SPEC", hint: "99 Rebounding & Defense, Refuses to Score (55)!", vals: [55, 38, 68, 99, 99, 82] },
+      { name: "Ben Wallace", safe: "Undrafted 4x DPOY #3", team: "DET", tier: "SPEC", hint: "99 Defense & Rebounding, 41 Free Throws/Shooting!", vals: [62, 35, 60, 96, 99, 80] },
+      { name: "Rudy Gobert", safe: "The Stifle Tower #27", team: "MIN", tier: "SPEC", hint: "98 Rebounding & Paint D, 35 Shooting!", vals: [84, 35, 62, 88, 98, 65] },
+      { name: "Ben Simmons", safe: "Pass-First Point Forward #10", team: "PHI", tier: "SPEC", hint: "93 Playmaking & 95 Perimeter D, 30 Shooting & 40 Clutch!", vals: [80, 30, 93, 95, 88, 40] },
+      // Traps & Memes
       { name: "Kwame Brown", safe: "Draft Bust #1", team: "WAS", tier: "TRAP", hint: "Small Hands & Butterfingers Under Pressure", vals: [62, 40, 50, 68, 72, 45] },
       { name: "Brian Scalabrine", safe: "The White Mamba #44", team: "BOS", tier: "TRAP", hint: "Human Victory Cigar & Bench Meme Legend", vals: [66, 78, 68, 62, 64, 75] },
-      { name: "Smush Parker", safe: "Backcourt Bystander #1", team: "LAL", tier: "TRAP", hint: "Famous for Combining with Kobe for 94 Points", vals: [68, 70, 69, 60, 55, 52] }
+      { name: "Thanasis Antetokounmpo", safe: "Sideline Bench Hype-Man #43", team: "MIL", tier: "TRAP", hint: "99 Towel-Waving Energy, 58 Skill Ratings", vals: [68, 52, 58, 70, 66, 50] }
     ]
   },
-  "🏈 Pro Football": {
+
+  "🏈 Pro Football (QBs)": {
     icon: "🏈",
-    attributes: ["Passing Accuracy", "Arm Strength & Deep Ball", "Rushing & Elusiveness", "Receiving & Hands", "Football IQ & Defense", "2-Minute Clutch Drive"],
-    statLabels: ["Total Yds/Yr", "Total TDs/Yr", "All-Pro Honors"],
+    attributes: ["Pocket Accuracy", "Arm Strength & Deep Ball", "Mobility & Rush Threat", "Pre-Snap IQ & Vision", "Pocket Presence & Poise", "4th-Quarter Clutch"],
+    primeStatLabels: ["Prime Pass Yds/Yr", "Prime Total TDs/Yr", "Prime Passer Rating"],
+    careerStatLabels: ["Career Pass Yards", "Career Total TDs", "Super Bowl Rings"],
     athletes: [
-      { name: "Tom Brady", safe: "The 7-Ring GOAT #12", team: "NE", tier: "GOAT", hint: "99 IQ, Accuracy & Clutch, Statue in the Pocket", vals: [99, 92, 54, 65, 99, 99] },
-      { name: "Patrick Mahomes", safe: "Showtime Grim Reaper #15", team: "KC", tier: "GOAT", hint: "No-Look Rocket Arm, Scrambling & OT Magic", vals: [97, 99, 91, 78, 96, 99] },
-      { name: "Jerry Rice", safe: "The 80 Route God", team: "SF", tier: "GOAT", hint: "Untouchable Receiving Records & Stamina", vals: [75, 72, 92, 99, 98, 99] },
-      { name: "Peyton Manning", safe: "The Omaha Sheriff #18", team: "IND", tier: "GOAT", hint: "5x MVP Field General, Zero Mobility", vals: [99, 93, 52, 60, 99, 95] },
-      { name: "Lamar Jackson", safe: "Action Jackson #8", team: "BAL", tier: "STAR", hint: "99 Human Joystick Rushing & Deep Flick", vals: [91, 94, 99, 82, 91, 92] },
-      { name: "Josh Allen", safe: "Buffalo Hurdle Tank #17", team: "BUF", tier: "STAR", hint: "99 Howitzer Arm & Bulldozer Dual-Threat", vals: [91, 99, 95, 78, 89, 95] },
-      { name: "Joe Burrow", safe: "Joe Shiesty #9", team: "CIN", tier: "STAR", hint: "Ice-Vein Pocket Surgeon & 4th Down Closer", vals: [97, 90, 82, 74, 96, 98] },
-      { name: "Randy Moss", safe: "The Freak #84", team: "MIN", tier: "GOAT", hint: "'You Got Mossed!' 99 Deep Ball Hands & Speed", vals: [70, 82, 95, 99, 88, 94] },
-      { name: "Calvin Johnson", safe: "Megatron #81", team: "DET", tier: "GOAT", hint: "Triple-Covered Jump Ball Monster", vals: [70, 78, 92, 99, 90, 95] },
-      { name: "Justin Jefferson", safe: "Jettas Griddy King #18", team: "MIN", tier: "STAR", hint: "Acrobatic Route Technician & Elite Hands", vals: [75, 74, 93, 99, 92, 95] },
-      { name: "Ja'Marr Chase", safe: "Always Open #1", team: "CIN", tier: "STAR", hint: "Explosive YAC & Deep Threat Receiver", vals: [72, 74, 95, 98, 90, 95] },
-      { name: "Tyreek Hill", safe: "The Cheetah #10", team: "MIA", tier: "STAR", hint: "99 Track Speed & Deep Separation", vals: [70, 72, 99, 96, 86, 92] },
-      { name: "Christian McCaffrey", safe: "Run CMC #23", team: "SF", tier: "STAR", hint: "1,000/1,000 Rushing & Receiving Swiss Army Knife", vals: [80, 76, 98, 96, 94, 94] },
-      { name: "Barry Sanders", safe: "Lion Ankle-Breaker #20", team: "DET", tier: "GOAT", hint: "Greatest Elusive Runner in Gridiron History", vals: [68, 65, 99, 88, 92, 93] },
-      { name: "Derrick Henry", safe: "King Henry Tractorcito #22", team: "BAL", tier: "SPEC", hint: "98 Stiff-Arm Freight Train & Jump-Pass Threat", vals: [74, 76, 98, 78, 88, 92] },
-      { name: "Saquon Barkley", safe: "Reverse Hurdle Phenom #26", team: "PHI", tier: "STAR", hint: "Home-Run Hitter with Elite Lower-Body Power", vals: [72, 72, 98, 90, 89, 93] },
-      { name: "Travis Kelce", safe: "Big Yeti Tight End #87", team: "KC", tier: "STAR", hint: "Playoff Zone-Finder & Unstoppable Improviser", vals: [78, 76, 86, 98, 96, 98] },
-      { name: "Rob Gronkowski", safe: "Gronk Spike #87", team: "NE", tier: "GOAT", hint: "Dominant Red-Zone & Blocking Tight End", vals: [70, 78, 89, 98, 94, 97] },
-      { name: "Lawrence Taylor", safe: "L.T. #56", team: "NYG", tier: "GOAT", hint: "99 Defensive Terror Who Changed Pass Protection", vals: [55, 65, 90, 75, 99, 97] },
-      { name: "Ed Reed", safe: "Ballhawk Safety #20", team: "BAL", tier: "GOAT", hint: "99 Defensive IQ, Interceptions & Return Threat", vals: [68, 72, 93, 94, 99, 96] },
-      { name: "Deion Sanders", safe: "Prime Time #21", team: "DAL", tier: "GOAT", hint: "99 Lockdown Island, Speed & Two-Way Hands", vals: [70, 70, 99, 95, 99, 96] },
-      { name: "Aaron Donald", safe: "Interior Wrecking Ball #99", team: "LAR", tier: "GOAT", hint: "3x DPOY Who Closes Super Bowls on 4th Down", vals: [55, 65, 86, 70, 99, 98] },
-      { name: "JaMarcus Russell", safe: "70-Yard Kneeling Cannon #2", team: "OAK", tier: "SPEC", hint: "99 Arm Strength, 45 Everything Else!", vals: [52, 99, 50, 50, 42, 45] },
-      { name: "Tim Tebow", safe: "Mile High Miracle #15", team: "DEN", tier: "SPEC", hint: "96 4th-Quarter Magic & Power Run, 55 Passing Accuracy!", vals: [55, 78, 91, 70, 82, 96] },
-      { name: "Nathan Peterman", safe: "5-Interception Half #2", team: "BUF", tier: "TRAP", hint: "Preseason Hall of Famer, Regular Season Pick-Six Machine", vals: [54, 62, 60, 55, 48, 40] }
+      // GOATs & First-Ballot Hall of Fame QBs
+      { name: "Tom Brady", safe: "The 7-Ring GOAT #12", team: "NE", tier: "GOAT", hint: "99 Accuracy, IQ, Pocket Poise & Clutch, 52 Mobility!", vals: [99, 93, 52, 99, 99, 99] },
+      { name: "Patrick Mahomes", safe: "Showtime Grim Reaper #15", team: "KC", tier: "GOAT", hint: "99 Rocket Arm, Pocket Escape & Overtime Magic", vals: [97, 99, 92, 97, 99, 99] },
+      { name: "Peyton Manning", safe: "The Omaha Sheriff #18", team: "IND", tier: "GOAT", hint: "5x MVP 99 Pre-Snap IQ & Accuracy, 48 Mobility!", vals: [99, 94, 48, 99, 97, 95] },
+      { name: "Joe Montana", safe: "Joe Cool 4-0 Finals #16", team: "SF", tier: "GOAT", hint: "Zero Super Bowl Interceptions & 99 Ice-Cold Clutch", vals: [98, 89, 82, 98, 98, 99] },
+      { name: "Aaron Rodgers", safe: "Hail Mary Bad Man #12", team: "GB", tier: "GOAT", hint: "4x MVP Off-Platform Laser Arm & TD-to-INT Ratio", vals: [99, 99, 85, 98, 95, 96] },
+      { name: "Drew Brees", safe: "Dome Pinpoint Surgeon #9", team: "NO", tier: "GOAT", hint: "All-Time Completion % King & Quick-Release Master", vals: [99, 89, 68, 99, 97, 95] },
+      { name: "Dan Marino", safe: "'84 Quick-Release Cannon #13", team: "MIA", tier: "GOAT", hint: "99 Lightning Release, Deep Arm & Pocket Avoidance, 45 Rush", vals: [98, 99, 45, 96, 98, 92] },
+      { name: "John Elway", safe: "The Helicopter Drive #7", team: "DEN", tier: "GOAT", hint: "99 Cross-Body Howitzer Arm & 4th-Quarter Comebacks", vals: [91, 99, 88, 93, 94, 98] },
+      { name: "Steve Young", safe: "Lefty Dual-Threat MVP #8", team: "SF", tier: "GOAT", hint: "6x Completion Title Winner with 95 Scrambling Speed", vals: [97, 92, 95, 96, 94, 95] },
+      { name: "Brett Favre", safe: "3x MVP Gunslinger #4", team: "GB", tier: "GOAT", hint: "99 Finger-Breaking Arm Strength, Risky Decisions", vals: [90, 99, 78, 86, 91, 94] },
+      { name: "Johnny Unitas", safe: "The Golden Arm #19", team: "BAL", tier: "GOAT", hint: "Invented the Two-Minute Drill", vals: [94, 94, 70, 97, 95, 98] },
+      { name: "Roger Staubach", safe: "Captain Comeback #12", team: "DAL", tier: "GOAT", hint: "Elusive Scrambler & Hail Mary Pioneer", vals: [92, 91, 89, 94, 95, 98] },
+      { name: "Kurt Warner", safe: "Greatest Show on Turf #13", team: "STL", tier: "GOAT", hint: "Super Bowl MVP Anticipation & Deep Accuracy, Low Speed", vals: [97, 93, 55, 96, 91, 96] },
+      { name: "Troy Aikman", safe: "90s Dynasty Precision #8", team: "DAL", tier: "GOAT", hint: "3x Super Bowl Champ with Pinpoint Timing", vals: [95, 92, 64, 94, 93, 95] },
+      // Modern Superstar QBs
+      { name: "Lamar Jackson", safe: "Action Jackson 2x MVP #8", team: "BAL", tier: "STAR", hint: "99 Human Joystick Rushing & Pocket Escape", vals: [92, 95, 99, 93, 96, 92] },
+      { name: "Josh Allen", safe: "Buffalo Hurdle Tank #17", team: "BUF", tier: "STAR", hint: "99 Howitzer Arm & 96 Bulldozer Rushing Threat", vals: [92, 99, 96, 91, 94, 96] },
+      { name: "Joe Burrow", safe: "Joe Shiesty #9", team: "CIN", tier: "STAR", hint: "98 Pocket Accuracy, Pre-Snap IQ & Ice-Vein Clutch", vals: [98, 91, 80, 97, 95, 98] },
+      { name: "Justin Herbert", safe: "65-Yard Laser Rocket #10", team: "LAC", tier: "STAR", hint: "98 Arm Strength & Pocket Poise Under Heavy Pressure", vals: [94, 98, 86, 92, 93, 89] },
+      { name: "C.J. Stroud", safe: "Rookie Phenom Surgeon #7", team: "HOU", tier: "STAR", hint: "Elite Downfield Placement & Low Turnover IQ", vals: [95, 94, 82, 93, 93, 93] },
+      { name: "Jayden Daniels", safe: "Hail Mary Dual-Threat #5", team: "WAS", tier: "STAR", hint: "96 Electric Speed & 95 4th-Down Clutch Poise", vals: [93, 92, 96, 91, 92, 95] },
+      { name: "Jalen Hurts", safe: "Tush Push Squatter #1", team: "PHI", tier: "STAR", hint: "95 Goal-Line Rushing Power & Deep Moon-Ball", vals: [90, 91, 95, 89, 90, 94] },
+      { name: "Matthew Stafford", safe: "No-Look Sidearm King #9", team: "LAR", tier: "STAR", hint: "98 Arm Strength & 98 Super Bowl Game-Winning Drive", vals: [93, 98, 66, 93, 92, 98] },
+      { name: "Russell Wilson", safe: "Prime Moon-Ball Magician #3", team: "SEA", tier: "STAR", hint: "96 Deep Ball & 4th-Quarter Miracle Escapes", vals: [93, 96, 93, 89, 86, 96] },
+      { name: "Ben Roethlisberger", safe: "Big Ben Pump-Fake #7", team: "PIT", tier: "STAR", hint: "97 Shedding Tacklers in the Pocket & End-Zone Toe-Tap", vals: [91, 95, 74, 91, 97, 96] },
+      { name: "Philip Rivers", safe: "Trash-Talk Field General #17", team: "SD", tier: "STAR", hint: "96 Pre-Snap IQ & Anticipation, 44 Running Speed!", vals: [95, 90, 44, 96, 91, 88] },
+      { name: "Andrew Luck", safe: "Generational Architect #12", team: "IND", tier: "STAR", hint: "Complete Dual-Threat Pocket & Playoff Comeback Leader", vals: [93, 95, 89, 95, 92, 94] },
+      { name: "Dak Prescott", safe: "Pre-Snap Audible Leader #4", team: "DAL", tier: "STAR", hint: "High Regular Season Accuracy & IQ, Tight Playoff Windows", vals: [93, 90, 82, 92, 89, 83] },
+      { name: "Brock Purdy", safe: "Mr. Relevant Anticipation #13", team: "SF", tier: "STAR", hint: "94 Timing, Vision & 10-Yard Split Scrambling, Average Arm", vals: [94, 83, 86, 94, 92, 91] },
+      // High-Variance Specialist QBs (Extreme Strengths + Fatal Flaws)
+      { name: "Michael Vick", safe: "Madden '04 Cheat Code #7", team: "ATL", tier: "SPEC", hint: "99 Mobility & 99 Left-Handed Cannon, 74 Pocket Accuracy!", vals: [74, 99, 99, 76, 84, 88] },
+      { name: "Cam Newton", safe: "2015 Superman MVP #1", team: "CAR", tier: "SPEC", hint: "98 Goal-Line Power Rush & 97 Arm, 79 Touch Accuracy", vals: [79, 97, 98, 84, 88, 91] },
+      { name: "Eli Manning", safe: "2x Giant Helmet-Catch #10", team: "NYG", tier: "SPEC", hint: "99 Super Bowl Clutch vs Unbeaten Pats, 54 Mobility!", vals: [86, 91, 54, 87, 88, 99] },
+      { name: "Randall Cunningham", safe: "The Ultimate Weapon #12", team: "PHI", tier: "SPEC", hint: "97 Scrambling & 70-Yard Bomb Arm", vals: [84, 98, 97, 85, 86, 88] },
+      { name: "Ryan Fitzpatrick", safe: "Harvard Fitzmagic #14", team: "MIA", tier: "SPEC", hint: "95 IQ & Braille No-Look Throws, Volatile Gunslinger", vals: [82, 86, 82, 95, 84, 88] },
+      { name: "Jameis Winston", safe: "30-TD / 30-INT Cinema #3", team: "TB", tier: "SPEC", hint: "95 Deep Ball Arm, 58 Pre-Snap Decision Making!", vals: [78, 95, 76, 58, 72, 80] },
+      { name: "Anthony Richardson", safe: "Combine Alien 99 Arm/Speed #5", team: "IND", tier: "SPEC", hint: "99 Arm Strength & 97 Rushing, 64 Short Accuracy!", vals: [64, 99, 97, 68, 75, 76] },
+      { name: "Tim Tebow", safe: "Mile High Overtime Miracle #15", team: "DEN", tier: "SPEC", hint: "96 4th-Quarter Clutch & 92 Rush, 52 Passing Accuracy!", vals: [52, 78, 92, 72, 76, 96] },
+      // QB Traps & Legendary Memes
+      { name: "JaMarcus Russell", safe: "70-Yard Kneeling Cannon #2", team: "OAK", tier: "TRAP", hint: "99 Arm Strength ONLY — 40s in IQ, Accuracy & Clutch!", vals: [52, 99, 55, 40, 45, 42] },
+      { name: "Zach Wilson", safe: "Pro-Day Cross-Body Throw #2", team: "NYJ", tier: "TRAP", hint: "92 Arm Talent, 52 Pocket Presence (Runs Backward 25 Yds)", vals: [64, 92, 82, 56, 52, 55] },
+      { name: "Will Levis", safe: "Mayo Coffee Surrender Cobra #8", team: "TEN", tier: "TRAP", hint: "93 Cannon Arm, Viral Backward-Flip Shovel Pass Decisions", vals: [68, 93, 78, 54, 55, 58] },
+      { name: "Nathan Peterman", safe: "5-Interception First Half #2", team: "BUF", tier: "TRAP", hint: "Preseason Legend, Regular Season Pick-Six Machine", vals: [54, 62, 60, 48, 45, 40] }
     ]
   },
+
   "⚽ World Soccer": {
     icon: "⚽",
     attributes: ["Clinical Finishing", "Dribbling & Flair", "Vision & Passing", "Defensive Workrate", "Pace & Stamina", "Big Match Clutch"],
-    statLabels: ["Goals/Yr", "Assists/Yr", "Major Trophies"],
+    primeStatLabels: ["Prime Season Goals", "Prime Season Assists", "Goal Contributions / 90"],
+    careerStatLabels: ["Career Goals", "Major Trophies Won", "Ballon d'Or / POTY"],
     athletes: [
-      { name: "Lionel Messi", safe: "La Pulga #10", team: "ARG", tier: "GOAT", hint: "8x Ballon d'Or Alien Playmaker & Finisher", vals: [99, 99, 99, 62, 89, 99] },
-      { name: "Cristiano Ronaldo", safe: "CR7 Apex Predator #7", team: "POR", tier: "GOAT", hint: "900+ Goals, Champions League Clutch God", vals: [99, 94, 87, 72, 97, 99] },
+      // GOATs & Immortal Icons
+      { name: "Lionel Messi", safe: "La Pulga #10", team: "ARG", tier: "GOAT", hint: "8x Ballon d'Or Alien Playmaker, Dribbler & Finisher", vals: [99, 99, 99, 62, 89, 99] },
+      { name: "Cristiano Ronaldo", safe: "CR7 Apex Predator #7", team: "POR", tier: "GOAT", hint: "900+ Career Goals, UCL Knockout Clutch God", vals: [99, 94, 87, 72, 97, 99] },
       { name: "Pelé", safe: "O Rei #10", team: "BRA", tier: "GOAT", hint: "3x World Cup Winner & Complete Attacker", vals: [99, 97, 95, 78, 95, 99] },
-      { name: "Diego Maradona", safe: "El Pibe de Oro #10", team: "ARG", tier: "GOAT", hint: "1986 World Cup Solo-Goal Magician", vals: [95, 99, 98, 68, 91, 99] },
-      { name: "Zinedine Zidane", safe: "Zizou Maestro #5", team: "FRA", tier: "GOAT", hint: "Velvet First Touch, Vision & Final Volleys", vals: [91, 97, 99, 82, 85, 98] },
-      { name: "Ronaldo Nazário", safe: "O Fenômeno R9", team: "BRA", tier: "GOAT", hint: "Unstoppable Explosive Dribbling & Rounding Keepers", vals: [99, 99, 86, 55, 97, 97] },
+      { name: "Diego Maradona", safe: "El Pibe de Oro #10", team: "ARG", tier: "GOAT", hint: "1986 World Cup Solo-Goal Dribbling Magician", vals: [95, 99, 98, 68, 91, 99] },
+      { name: "Zinedine Zidane", safe: "Zizou Maestro #5", team: "FRA", tier: "GOAT", hint: "Velvet First Touch, Vision & UCL Final Volleys", vals: [91, 97, 99, 82, 85, 98] },
+      { name: "Ronaldo Nazário", safe: "O Fenômeno R9", team: "BRA", tier: "GOAT", hint: "99 Explosive Dribbling, Pace & Rounding Keepers", vals: [99, 99, 86, 55, 97, 97] },
       { name: "Ronaldinho", safe: "Joga Bonito Magician #10", team: "BRA", tier: "GOAT", hint: "99 Elastico Flair & Bernabéu Standing Ovation", vals: [92, 99, 96, 58, 91, 95] },
-      { name: "Johan Cruyff", safe: "Total Football Prophet #14", team: "NED", tier: "GOAT", hint: "The Cruyff Turn & Tactical Mastermind", vals: [94, 98, 99, 78, 93, 96] },
-      { name: "Kylian Mbappé", safe: "Bondy Rocket #7", team: "FRA", tier: "STAR", hint: "World Cup Final Hat-Trick & 99 Blistering Pace", vals: [97, 96, 86, 60, 99, 98] },
-      { name: "Erling Haaland", safe: "The Nordic Cyborg #9", team: "NOR", tier: "SPEC", hint: "99 Goal Poacher & Sprint Power, Low Link-Up Play", vals: [99, 78, 74, 68, 96, 94] },
-      { name: "Jude Bellingham", safe: "Hey Jude #5", team: "ENG", tier: "STAR", hint: "95th-Minute Box-to-Box Clutch Midfielder", vals: [91, 91, 92, 90, 93, 97] },
-      { name: "Vinícius Júnior", safe: "Baila Vini #7", team: "BRA", tier: "STAR", hint: "UCL Knockout Dribbler, Pace & Big-Game Closer", vals: [92, 98, 89, 68, 98, 97] },
-      { name: "Lamine Yamal", safe: "La Masia Wonderkid #19", team: "ESP", tier: "STAR", hint: "Teenage Euro Champion Wing Wizard", vals: [89, 97, 95, 72, 94, 94] },
-      { name: "Kevin De Bruyne", safe: "King Kev Assist Machine #17", team: "BEL", tier: "STAR", hint: "99 Laser Through-Balls & Crossing", vals: [90, 89, 99, 78, 85, 94] },
+      { name: "Johan Cruyff", safe: "Total Football Prophet #14", team: "NED", tier: "GOAT", hint: "The Cruyff Turn & Tactical Playmaking Mastermind", vals: [94, 98, 99, 78, 93, 96] },
+      { name: "Thierry Henry", safe: "Highbury Va-Va-Voom King #14", team: "FRA", tier: "GOAT", hint: "20 Goals / 20 Assists Season with 98 Blistering Pace", vals: [98, 96, 94, 70, 98, 95] },
+      { name: "Andrés Iniesta", safe: "El Ilusionista #8", team: "ESP", tier: "GOAT", hint: "World Cup Final Winner & Tight-Space Dribbling Genius", vals: [85, 98, 99, 82, 88, 98] },
+      { name: "Xavi Hernández", safe: "Tiki-Taka Metronome #6", team: "ESP", tier: "GOAT", hint: "99 Passing Vision & Tempo Control", vals: [82, 95, 99, 84, 88, 96] },
       { name: "Luka Modrić", safe: "Trivela Maestro #10", team: "CRO", tier: "GOAT", hint: "6x UCL Midfield Engine & Endless Stamina", vals: [84, 94, 99, 91, 93, 97] },
-      { name: "Andrés Iniesta", safe: "El Ilusionista #8", team: "ESP", tier: "GOAT", hint: "World Cup Final Winner & Tight-Space Genius", vals: [85, 98, 99, 82, 88, 98] },
-      { name: "Rodri", safe: "Untucked Shirt Anchor #16", team: "ESP", tier: "STAR", hint: "Ballon d'Or Defensive Midfielder & Late Bangers", vals: [86, 88, 95, 98, 90, 97] },
-      { name: "N'Golo Kanté", safe: "Covers 30% of Earth #7", team: "FRA", tier: "SPEC", hint: "99 Defensive Workrate & Endless Lungs", vals: [72, 84, 85, 99, 99, 93] },
-      { name: "Paolo Maldini", safe: "Il Capitano #3", team: "ITA", tier: "GOAT", hint: "Greatest Defender of All Time", vals: [70, 82, 88, 99, 93, 97] },
-      { name: "Virgil van Dijk", safe: "The Anfield Colossus #4", team: "NED", tier: "STAR", hint: "99 Defensive Aura & Long Diagonal Passing", vals: [76, 78, 88, 99, 91, 94] },
-      { name: "Sergio Ramos", safe: "92:48 Header King #4", team: "ESP", tier: "STAR", hint: "Elite Defender with 99 Clutch Final Headers", vals: [86, 78, 84, 96, 90, 99] },
-      { name: "Gareth Bale", safe: "Golf & Bicycle Kick #11", team: "WAL", tier: "STAR", hint: "99 Sprint Speed & Champions League Final Bangers", vals: [94, 92, 86, 76, 99, 98] },
-      { name: "Adama Traoré", safe: "Baby-Oil Speed Demon #11", team: "ESP", tier: "SPEC", hint: "99 Pace & 94 Dribbling, 58 Finishing into Row Z!", vals: [58, 94, 65, 72, 99, 62] },
-      { name: "Nicklas Bendtner", safe: "Lord Bendtner #52", team: "DEN", tier: "TRAP", hint: "100 Confidence in Interviews, 70 on the Pitch", vals: [72, 64, 62, 52, 68, 75] },
-      { name: "Antony", safe: "360 Fidget Spinner #21", team: "BRA", tier: "TRAP", hint: "88 Flashy Spins, Low End Product", vals: [68, 88, 70, 68, 84, 62] }
+      { name: "Paolo Maldini", safe: "Il Capitano #3", team: "ITA", tier: "GOAT", hint: "99 Defensive Perfection & 5x European Cup Winner", vals: [70, 82, 88, 99, 93, 97] },
+      { name: "Franz Beckenbauer", safe: "Der Kaiser #5", team: "GER", tier: "GOAT", hint: "2x Ballon d'Or Sweeper with 99 Defense & 95 Passing", vals: [82, 88, 95, 99, 92, 97] },
+      // Modern Superstars & Legends
+      { name: "Kylian Mbappé", safe: "Bondy Rocket #7", team: "FRA", tier: "STAR", hint: "World Cup Final Hat-Trick & 99 Blistering Pace", vals: [97, 96, 86, 60, 99, 98] },
+      { name: "Jude Bellingham", safe: "Hey Jude #5", team: "ENG", tier: "STAR", hint: "95th-Minute Box-to-Box Complete Midfielder", vals: [91, 91, 92, 90, 93, 97] },
+      { name: "Vinícius Júnior", safe: "Baila Vini #7", team: "BRA", tier: "STAR", hint: "UCL Final Scorer, 98 Dribbling & 98 Pace", vals: [92, 98, 89, 68, 98, 97] },
+      { name: "Lamine Yamal", safe: "La Masia Wonderkid #19", team: "ESP", tier: "STAR", hint: "Teenage Euro Champion Wing Wizard", vals: [89, 97, 95, 72, 94, 95] },
+      { name: "Kevin De Bruyne", safe: "King Kev Assist Machine #17", team: "BEL", tier: "STAR", hint: "99 Laser Through-Balls & Outside-Box Rockets", vals: [91, 89, 99, 78, 85, 94] },
+      { name: "Mohamed Salah", safe: "The Egyptian King #11", team: "EGY", tier: "STAR", hint: "Record Premier League Winger for Goals & Assists", vals: [96, 94, 92, 76, 95, 95] },
+      { name: "Neymar Jr.", safe: "Santos Samba Prince #10", team: "BRA", tier: "STAR", hint: "99 Rainbow Flick Flair, Vision & Remontada Magic", vals: [93, 99, 96, 58, 92, 94] },
+      { name: "Luis Suárez", safe: "El Pistolero #9", team: "URU", tier: "STAR", hint: "98 Volley/Nutmeg Striker & Relentless Pressing", vals: [98, 93, 92, 80, 88, 96] },
+      { name: "Robert Lewandowski", safe: "5 Goals in 9 Minutes #9", team: "POL", tier: "STAR", hint: "99 Penalty-Box Finishing & Hold-Up Play", vals: [99, 88, 85, 74, 87, 94] },
+      { name: "Karim Benzema", safe: "2022 UCL Ballon d'Or #9", team: "FRA", tier: "STAR", hint: "Complete Link-Up Striker & Knockout Hat-Trick Closer", vals: [96, 92, 93, 76, 86, 98] },
+      { name: "Zlatan Ibrahimović", safe: "35-Yard Bicycle Kick Lion #10", team: "SWE", tier: "STAR", hint: "Acrobatic Martial-Arts Finishing & Playmaking Target Man", vals: [97, 92, 90, 65, 84, 95] },
+      { name: "Wayne Rooney", safe: "White Pelé Street Fighter #10", team: "ENG", tier: "STAR", hint: "95 Finishing, Vision & Full-Pitch Defensive Workrate", vals: [95, 90, 93, 92, 93, 95] },
+      { name: "Gareth Bale", safe: "Bartra Touchline Burner #11", team: "WAL", tier: "STAR", hint: "99 Sprint Speed & UCL Final Overhead Kick", vals: [94, 92, 86, 76, 99, 98] },
+      { name: "Rodri", safe: "Untucked Shirt Anchor #16", team: "ESP", tier: "STAR", hint: "Ballon d'Or CDM with 98 Defense, 95 Passing & 97 Clutch", vals: [86, 88, 95, 98, 90, 97] },
+      { name: "Sergio Ramos", safe: "92:48 Header King #4", team: "ESP", tier: "STAR", hint: "96 Defender with 99 Clutch Final Headers", vals: [86, 78, 84, 96, 90, 99] },
+      { name: "Virgil van Dijk", safe: "The Anfield Colossus #4", team: "NED", tier: "STAR", hint: "99 Never-Dribbled-Past Defender & 88 Long Passing", vals: [76, 78, 88, 99, 91, 94] },
+      // High-Variance Specialists
+      { name: "Erling Haaland", safe: "The Nordic Cyborg #9", team: "NOR", tier: "SPEC", hint: "99 Goal Poacher & 96 Pace, 72 Dribbling/Passing!", vals: [99, 74, 72, 68, 96, 94] },
+      { name: "N'Golo Kanté", safe: "Covers 30% of Earth #7", team: "FRA", tier: "SPEC", hint: "99 Defensive Workrate & 99 Stamina, 70 Finishing", vals: [70, 84, 85, 99, 99, 93] },
+      { name: "Didier Drogba", safe: "10 Goals in 10 Finals #11", team: "CIV", tier: "SPEC", hint: "99 Cup Final Clutch & Power Header", vals: [94, 86, 84, 82, 91, 99] },
+      { name: "Roberto Carlos", safe: "Banana Free-Kick Cannon #6", team: "BRA", tier: "SPEC", hint: "99 Pace/Stamina Wing-Back with Thunderous Left Foot", vals: [88, 90, 88, 90, 99, 94] },
+      { name: "Andrea Pirlo", safe: "No-Look Panenka Architect #21", team: "ITA", tier: "SPEC", hint: "99 Vision & Passing, 58 Sprint Pace!", vals: [84, 91, 99, 76, 58, 97] },
+      { name: "Adama Traoré", safe: "Baby-Oil Speed Demon #11", team: "ESP", tier: "SPEC", hint: "99 Pace & 95 Dribbling, 56 Finishing into Row Z!", vals: [56, 95, 65, 72, 99, 62] },
+      { name: "Filippo Inzaghi", safe: "Born Offside Poacher #9", team: "ITA", tier: "SPEC", hint: "97 Finishing & 98 UCL Final Clutch, 62 Dribbling/Passing!", vals: [97, 62, 60, 55, 78, 98] },
+      // Traps & Cult Memes
+      { name: "Nicklas Bendtner", safe: "Lord Bendtner #52", team: "DEN", tier: "TRAP", hint: "100 Confidence in Interviews, 70s on the Pitch", vals: [72, 64, 62, 52, 68, 75] },
+      { name: "Antony", safe: "360 Fidget Spinner #21", team: "BRA", tier: "TRAP", hint: "88 Flashy Spins, Low End Product", vals: [66, 88, 70, 68, 84, 62] },
+      { name: "Timo Werner", safe: "Offside Flag Magnet #11", team: "GER", tier: "TRAP", hint: "95 Sprint Pace, 58 Open-Goal Finishing!", vals: [58, 76, 70, 78, 95, 60] }
     ]
   },
+
   "🎾 Pro Tennis": {
     icon: "🎾",
     attributes: ["Forehand Power", "Backhand Precision", "Serve & Aces", "Net Volley & Touch", "Court Speed & Stamina", "Tiebreak Mental Clutch"],
-    statLabels: ["Grand Slams", "Career Win %", "Weeks at #1"],
+    primeStatLabels: ["Prime Season Win %", "Prime Titles / Season", "Aces / Season"],
+    careerStatLabels: ["Grand Slam Titles", "Weeks at World #1", "Career Tour Titles"],
     athletes: [
-      { name: "Novak Djokovic", safe: "The Belgrade Elastic Wall", team: "SRB", tier: "GOAT", hint: "24 Slams, 99 Backhand, Speed & Tiebreak God", vals: [96, 99, 94, 90, 99, 99] },
-      { name: "Roger Federer", safe: "The Swiss Maestro", team: "SUI", tier: "GOAT", hint: "Liquid Forehand, Precision Serve & 99 Net Grace", vals: [99, 92, 97, 99, 94, 95] },
-      { name: "Rafael Nadal", safe: "The King of Clay", team: "ESP", tier: "GOAT", hint: "14 Roland Garros Titles, Heavy Topspin & 99 Fight", vals: [99, 95, 89, 92, 99, 99] },
-      { name: "Serena Williams", safe: "The 23-Slam Queen", team: "USA", tier: "GOAT", hint: "Greatest Serve & Power Baseline Game Ever", vals: [99, 96, 99, 90, 93, 99] },
-      { name: "Carlos Alcaraz", safe: "Carlitos Drop-Shot Phenom", team: "ESP", tier: "STAR", hint: "100mph Forehand, Feather Touch & 5-Set Stamina", vals: [98, 93, 91, 97, 99, 97] },
-      { name: "Jannik Sinner", safe: "The San Candido Laser", team: "ITA", tier: "STAR", hint: "Cleanest Ball-Striker on Both Wings Under Pressure", vals: [97, 98, 94, 88, 95, 96] },
-      { name: "Pete Sampras", safe: "Pistol Pete", team: "USA", tier: "GOAT", hint: "99 Clutch Second Serve & Slam Dunk Smash", vals: [95, 84, 99, 98, 91, 98] },
+      // GOATs & All-Time Legends
+      { name: "Novak Djokovic", safe: "The Belgrade Elastic Wall", team: "SRB", tier: "GOAT", hint: "24 Slams, 99 Backhand, Court Speed & Tiebreak God", vals: [96, 99, 94, 90, 99, 99] },
+      { name: "Roger Federer", safe: "The Swiss Maestro", team: "SUI", tier: "GOAT", hint: "99 Liquid Forehand, Spot Serve & 99 Net Volley Grace", vals: [99, 92, 97, 99, 94, 95] },
+      { name: "Rafael Nadal", safe: "The King of Clay", team: "ESP", tier: "GOAT", hint: "14 Roland Garros Titles, 99 Heavy Topspin Forehand & Fight", vals: [99, 95, 89, 92, 99, 99] },
+      { name: "Serena Williams", safe: "The 23-Slam Queen", team: "USA", tier: "GOAT", hint: "99 Greatest Serve, Forehand & Championship Mentality", vals: [99, 96, 99, 90, 93, 99] },
+      { name: "Steffi Graf", safe: "Golden Slam Forehand", team: "GER", tier: "GOAT", hint: "22 Slams, 99 Inside-Out Forehand & Footwork", vals: [99, 93, 91, 92, 99, 98] },
+      { name: "Pete Sampras", safe: "Pistol Pete", team: "USA", tier: "GOAT", hint: "14 Slams, 99 Clutch Second Serve & Running Forehand", vals: [95, 84, 99, 98, 91, 98] },
       { name: "Andre Agassi", safe: "The Vegas Punisher", team: "USA", tier: "GOAT", hint: "Career Golden Slam & Pure Baseline Ball-Striking", vals: [96, 98, 86, 84, 90, 95] },
-      { name: "Steffi Graf", safe: "Fräulein Forehand", team: "GER", tier: "GOAT", hint: "99 Inside-Out Forehand, Footwork & Slice", vals: [99, 93, 91, 92, 99, 98] },
-      { name: "Iga Świątek", safe: "The Warsaw Bakery (6-0)", team: "POL", tier: "STAR", hint: "Heavy Topspin, Sliding Movement & Clay Mastery", vals: [96, 95, 86, 86, 98, 94] },
-      { name: "Aryna Sabalenka", safe: "Tiger Baseline Crusher", team: "BLR", tier: "STAR", hint: "Raw Groundstroke Power & Hardcourt Dominance", vals: [98, 94, 93, 84, 90, 93] },
-      { name: "Andy Murray", safe: "Sir Andy Lob Master", team: "GBR", tier: "STAR", hint: "Elite Two-Handed Backhand, Defense & Grit", vals: [89, 97, 86, 92, 97, 95] },
-      { name: "Stan Wawrinka", safe: "Stan The Man (1HBH Rocket)", team: "SUI", tier: "SPEC", hint: "99 One-Handed Backhand Howitzer in Grand Slam Finals", vals: [94, 99, 92, 85, 88, 96] },
-      { name: "Björn Borg", safe: "The Ice Borg", team: "SWE", tier: "GOAT", hint: "11 Slams, Ice-Cold Pulse & Endless Stamina", vals: [94, 95, 88, 86, 99, 99] },
-      { name: "John McEnroe", safe: "'You Cannot Be Serious!'", team: "USA", tier: "GOAT", hint: "99 Serve-and-Volley Touch & Left-Handed Angles", vals: [88, 89, 94, 99, 92, 92] },
-      { name: "Martina Navratilova", safe: "167-Title Volley GOAT", team: "USA", tier: "GOAT", hint: "Unmatched Net Coverage & 99 Volley Mastery", vals: [93, 94, 95, 99, 97, 97] },
-      { name: "Daniil Medvedev", safe: "The Hardcourt Octopus", team: "RUS", tier: "STAR", hint: "Stands 15 Feet Behind Baseline & Returns Everything", vals: [88, 96, 93, 80, 97, 93] },
-      { name: "John Isner", safe: "70-68 Marathon Servebot", team: "USA", tier: "SPEC", hint: "All-Time Aces Leader (99 Serve), 68 Movement!", vals: [91, 74, 99, 84, 68, 92] },
-      { name: "Ivo Karlović", safe: "6'11\" Ace Doctor", team: "CRO", tier: "SPEC", hint: "99 Unreturnable Serve, 62 Baseline Rallies!", vals: [82, 62, 99, 88, 64, 88] },
-      { name: "Juan Martín del Potro", safe: "The Tower of Tandil", team: "ARG", tier: "SPEC", hint: "99 Fearhand Nuclear Missile, Wrist-Limited Backhand", vals: [99, 78, 93, 85, 84, 94] },
-      { name: "Gaël Monfils", safe: "La Monf 360 Showman", team: "FRA", tier: "SPEC", hint: "99 Diving Speed & Trick Shots, Plays for the Crowd", vals: [92, 89, 91, 88, 99, 78] },
-      { name: "Nick Kyrgios", safe: "Underarm Serve Maverick", team: "AUS", tier: "SPEC", hint: "98 Serve & Touch Talent, Volatile Meltdown Risk", vals: [93, 91, 98, 95, 82, 62] },
-      { name: "Bernard Tomic", safe: "8-Second Match Point Tank", team: "AUS", tier: "TRAP", hint: "Returned Serve with the Handle of His Racket", vals: [72, 70, 78, 74, 52, 38] }
+      { name: "Björn Borg", safe: "The Ice Borg", team: "SWE", tier: "GOAT", hint: "11 Slams, 99 Stamina & Ice-Cold 5th-Set Pulse", vals: [94, 95, 88, 86, 99, 99] },
+      { name: "Martina Navratilova", safe: "167-Title Volley GOAT", team: "USA", tier: "GOAT", hint: "99 Net Volley Mastery & Serve-and-Volley Speed", vals: [93, 94, 95, 99, 97, 97] },
+      { name: "Chris Evert", safe: "The Ice Maiden (90% Win Rate)", team: "USA", tier: "GOAT", hint: "18 Slams, 99 Two-Handed Backhand Precision & Mental Composure", vals: [93, 99, 85, 88, 94, 99] },
+      { name: "John McEnroe", safe: "'You Cannot Be Serious!'", team: "USA", tier: "GOAT", hint: "99 Net Touch & Left-Handed Serve Angles", vals: [88, 89, 94, 99, 92, 92] },
+      { name: "Monica Seles", safe: "Two-Handed Teen Phenom", team: "USA", tier: "GOAT", hint: "8 Slams Before Age 20, Relentless Baseline Power", vals: [97, 98, 86, 84, 93, 98] },
+      { name: "Jimmy Connors", safe: "109 Career Titles Bulldog", team: "USA", tier: "GOAT", hint: "All-Time Titles Leader with Flat Backhand & 98 Fight", vals: [92, 97, 84, 93, 96, 98] },
+      { name: "Ivan Lendl", safe: "The Father of Modern Power", team: "CZE", tier: "GOAT", hint: "98 Inside-Out Forehand & Fitness Revolution", vals: [98, 93, 93, 86, 96, 94] },
+      // Modern Superstars & Grand Slam Champions
+      { name: "Carlos Alcaraz", safe: "Carlitos Drop-Shot Phenom", team: "ESP", tier: "STAR", hint: "100mph Forehand, 97 Feather Drop-Shot & 99 Speed", vals: [98, 93, 91, 97, 99, 97] },
+      { name: "Jannik Sinner", safe: "The San Candido Laser", team: "ITA", tier: "STAR", hint: "Cleanest Ball-Striker on Both Wings Under Pressure", vals: [97, 98, 94, 88, 95, 96] },
+      { name: "Iga Świątek", safe: "The Warsaw Bakery (6-0)", team: "POL", tier: "STAR", hint: "Heavy Topspin Forehand, Sliding Speed & Clay Mastery", vals: [96, 95, 86, 86, 98, 95] },
+      { name: "Aryna Sabalenka", safe: "Tiger Baseline Crusher", team: "BLR", tier: "STAR", hint: "98 Raw Groundstroke Power & Hardcourt Dominance", vals: [98, 95, 93, 84, 90, 94] },
+      { name: "Coco Gauff", safe: "US Open Speed Phenom", team: "USA", tier: "STAR", hint: "99 Court Coverage, Elite Backhand & Fighting Spirit", vals: [86, 96, 89, 90, 99, 95] },
+      { name: "Venus Williams", safe: "7-Slam Grass Thunderbolt", team: "USA", tier: "STAR", hint: "129mph Serve, Wingspan Net Coverage & Flat Lasers", vals: [95, 93, 97, 94, 95, 93] },
+      { name: "Andy Murray", safe: "Sir Andy Lob Master", team: "GBR", tier: "STAR", hint: "97 Backhand, 97 Defense & Unmatched Topspin Lob", vals: [89, 97, 86, 93, 97, 95] },
+      { name: "Boris Becker", safe: "Boom-Boom Diving Volley", team: "GER", tier: "STAR", hint: "17-Year-Old Wimbledon Champ with 97 Serve & Net Dive", vals: [93, 89, 97, 96, 90, 95] },
+      { name: "Stefan Edberg", safe: "Kick-Serve & Volley Artist", team: "SWE", tier: "STAR", hint: "99 Net Volley & Effortless Footwork", vals: [86, 93, 92, 99, 95, 93] },
+      { name: "Maria Sharapova", safe: "Career Slam Baseline Ice", team: "RUS", tier: "STAR", hint: "97 Flat Groundstrokes & 97 3-Set Mental Toughness", vals: [95, 96, 88, 80, 88, 97] },
+      { name: "Justine Henin", safe: "1HBH Whip Maestro", team: "BEL", tier: "STAR", hint: "99 One-Handed Backhand & All-Court Variety", vals: [93, 99, 86, 95, 95, 95] },
+      { name: "Naomi Osaka", safe: "4-Slam Hardcourt Striker", team: "JPN", tier: "STAR", hint: "97 Serve & Forehand First-Strike Power", vals: [97, 92, 96, 82, 89, 94] },
+      { name: "Daniil Medvedev", safe: "The Hardcourt Octopus", team: "RUS", tier: "STAR", hint: "97 Backhand Wall & 97 Stamina from 15 Feet Back", vals: [88, 97, 93, 80, 97, 93] },
+      { name: "Lleyton Hewitt", safe: "'C'mon!' Counterpuncher", team: "AUS", tier: "STAR", hint: "98 Speed, Passing Shots & 5-Set Grit", vals: [88, 93, 85, 89, 98, 96] },
+      // High-Variance Specialists
+      { name: "Stan Wawrinka", safe: "Stan The Man (1HBH Rocket)", team: "SUI", tier: "SPEC", hint: "99 One-Handed Backhand Howitzer in Slam Finals", vals: [94, 99, 92, 85, 88, 96] },
+      { name: "Andy Roddick", safe: "155mph Nebraska Rocket", team: "USA", tier: "SPEC", hint: "99 Serve & 95 Forehand, Vulnerable at the Net (78)", vals: [95, 82, 99, 78, 89, 92] },
+      { name: "Juan Martín del Potro", safe: "The Tower of Tandil", team: "ARG", tier: "SPEC", hint: "99 Fearhand Nuclear Missile, Wrist-Limited Backhand (76)", vals: [99, 76, 94, 85, 84, 94] },
+      { name: "Marat Safin", safe: "2005 AO Giant-Slayer", team: "RUS", tier: "SPEC", hint: "98 Backhand & Serve Talent, Broken-Racket Volatility", vals: [94, 98, 95, 88, 89, 84] },
+      { name: "Ashleigh Barty", safe: "Wimbledon Slice Architect", team: "AUS", tier: "SPEC", hint: "97 Serve & 98 Net/Slice Variety", vals: [93, 94, 96, 98, 92, 95] },
+      { name: "John Isner", safe: "70-68 Marathon Servebot", team: "USA", tier: "SPEC", hint: "All-Time Aces King (99 Serve), 65 Court Movement!", vals: [91, 72, 99, 84, 65, 93] },
+      { name: "Ivo Karlović", safe: "6'11\" Ace Doctor", team: "CRO", tier: "SPEC", hint: "99 Unreturnable Serve, 60 Baseline Rallying!", vals: [82, 60, 99, 88, 62, 88] },
+      { name: "Gaël Monfils", safe: "La Monf 360 Showman", team: "FRA", tier: "SPEC", hint: "99 Diving Court Speed, Plays for Highlight Reels (78 Clutch)", vals: [93, 89, 91, 88, 99, 78] },
+      { name: "Nick Kyrgios", safe: "Underarm Serve Maverick", team: "AUS", tier: "SPEC", hint: "98 Serve & Touch Talent, 60 Meltdown Risk!", vals: [93, 91, 98, 95, 82, 60] },
+      { name: "Alexander Zverev", safe: "135mph Serve & Backhand Beam", team: "GER", tier: "SPEC", hint: "97 Backhand & 96 First Serve, Tight 5th-Set Nerves (76)", vals: [90, 97, 96, 82, 92, 76] },
+      // Traps & Wildcards
+      { name: "Dustin Brown", safe: "Dreadlock Serve-Volley Trickster", team: "JAM", tier: "TRAP", hint: "94 Net Trick Shots vs Nadal on Grass, 68 Baseline Consistency", vals: [76, 72, 88, 94, 88, 66] },
+      { name: "Bernard Tomic", safe: "8-Second Match Point Tank", team: "AUS", tier: "TRAP", hint: "Returned Serve with the Handle of His Racket (38 Clutch)", vals: [72, 70, 78, 74, 52, 38] }
     ]
   }
 };
@@ -326,7 +410,7 @@ let state = {
   autoTokens: 1,
   swapTokens: 1,
   drawnNames: new Set(),
-  leaderboard: JSON.parse(localStorage.getItem("pf_leaderboard_v2") || "[]")
+  leaderboard: JSON.parse(localStorage.getItem("pf_leaderboard_v3") || "[]")
 };
 
 // ==========================================
@@ -472,6 +556,56 @@ function switchMainView(view) {
 }
 
 // ==========================================
+// ARCHETYPE GENERATOR
+// ==========================================
+function getPlayerArchetype(league, rawVals) {
+  const maxVal = Math.max(...rawVals);
+  const topIdx = rawVals.indexOf(maxVal);
+
+  if (league.includes("Basketball")) {
+    const names = [
+      "Paint-Dominant Slasher",
+      "Deep-Range Sharpshooter",
+      "Heliocentric Floor General",
+      "Two-Way Lockdown Wing",
+      "Glass-Cleaning Rim Protector",
+      "4th-Quarter Takeover Closer"
+    ];
+    return names[topIdx];
+  } else if (league.includes("Football")) {
+    const names = [
+      "Pinpoint Pocket Surgeon",
+      "Deep-Ball Gunslinger",
+      "Dual-Threat Human Joystick",
+      "Pre-Snap Field General",
+      "Unflappable Pocket Houdini",
+      "Two-Minute Drill Reaper"
+    ];
+    return names[topIdx];
+  } else if (league.includes("Soccer")) {
+    const names = [
+      "Clinical Penalty-Box Poacher",
+      "Joga Bonito Wing Magician",
+      "Tiki-Taka Midfield Maestro",
+      "Box-to-Box Engine Anchor",
+      "Touchline Speed Demon",
+      "Champions League Final Closer"
+    ];
+    return names[topIdx];
+  } else {
+    const names = [
+      "Heavy-Topspin Baseline Punisher",
+      "Two-Wing Laser Counterpuncher",
+      "Unreturnable Ace Servebot",
+      "Serve-and-Volley Net Artist",
+      "5-Set Elastic Court Wall",
+      "Grand Slam Tiebreak Assassin"
+    ];
+    return names[topIdx];
+  }
+}
+
+// ==========================================
 // RENDERING ENGINE
 // ==========================================
 function renderAll() {
@@ -515,8 +649,8 @@ function renderHeaderControls() {
   }
 
   document.getElementById("hofCount").textContent = state.leaderboard.length;
+  document.getElementById("tabBtnDex").textContent = `📖 Player Dex (${LEAGUES_DATA[state.league].athletes.length})`;
 
-  // Spin buttons state
   const spinBtn = document.getElementById("spinBtn");
   const skipBtn = document.getElementById("skipBtn");
   const autoBtn = document.getElementById("autoBtn");
@@ -548,7 +682,7 @@ function renderSpinBanner() {
     if (filledCount < 6) {
       container.innerHTML = `
         <div class="border border-slate-800 bg-slate-900/50 rounded-xl p-4 text-center text-sm text-slate-400">
-          👆 Click <strong class="text-white">SPIN ATHLETE #${filledCount + 1}</strong> above to draw a player, then select an open skill card below!
+          👆 Click <strong class="text-white">SPIN ATHLETE #${filledCount + 1}</strong> above to draw a player from the 40-athlete pool, then select an open skill card below!
         </div>`;
     } else {
       container.innerHTML = "";
@@ -643,7 +777,6 @@ function renderBoardAndRadar() {
     }
   }).join("");
 
-  // Render Radar SVG
   const vals = state.assignedSlots.map((s, i) => (s ? s.vals[i] : 0));
   document.getElementById("radarContainer").innerHTML = buildRadarSvg(attrs, vals);
 }
@@ -693,7 +826,7 @@ function buildRadarSvg(labels, values) {
 }
 
 // ==========================================
-// CAREER SIMULATION & SHARE SCORECARD
+// SPORT-SPECIFIC CAREER SIMULATION ENGINE
 // ==========================================
 function renderCareerSim() {
   const container = document.getElementById("careerSimContainer");
@@ -706,7 +839,7 @@ function renderCareerSim() {
   const rawVals = state.assignedSlots.map((s, i) => s.vals[i]);
   const baseOvr = Math.floor(rawVals.reduce((a, b) => a + b, 0) / 6);
 
-  // Evaluate Synergies
+  // Synergies
   let bonus = 0;
   const badges = [];
   const teams = state.assignedSlots.map(s => s.team);
@@ -730,6 +863,7 @@ function renderCareerSim() {
   const finalOvr = Math.min(99, baseOvr + bonus);
   const clutch = rawVals[5];
   const seed = rawVals.reduce((acc, v, i) => acc + v * (i + 13), 0) + finalOvr * 29;
+  const archetype = getPlayerArchetype(state.league, rawVals);
 
   let tier = "🧢 ROTATION CULT HERO", hof = "2.5%", titles = 0, mvps = 0;
   if (finalOvr >= 96) {
@@ -754,48 +888,128 @@ function renderCareerSim() {
   }
 
   const lgCfg = LEAGUES_DATA[state.league];
-  let stats = [];
-  if (state.league.includes("Basketball")) {
-    const ppg = Math.max(7.5, (11 + ((rawVals[0] * 0.55 + rawVals[1] * 0.45) - 60) * 0.58)).toFixed(1);
-    const rpg = Math.max(2.5, (3.2 + (rawVals[4] - 55) * 0.24)).toFixed(1);
-    const apg = Math.max(1.8, (2.0 + (rawVals[2] - 55) * 0.23)).toFixed(1);
-    stats = [`${ppg} PPG`, `${rpg} RPG`, `${apg} APG`];
-  } else if (state.league.includes("Football")) {
-    const yds = Math.max(950, Math.round(1800 + ((rawVals[0] + rawVals[1] + rawVals[2] + rawVals[3]) / 4 - 55) * 90));
-    const tds = Math.max(6, Math.round(12 + ((rawVals[0] + rawVals[3] + rawVals[5]) / 3 - 55) * 0.95));
-    const ap = Math.max(0, Math.round((finalOvr - 82) * 0.65));
-    stats = [`${yds.toLocaleString()} Yds/Yr`, `${tds} TDs/Yr`, `${ap}x All-Pro`];
-  } else if (state.league.includes("Soccer")) {
-    const gls = Math.max(2, Math.round(5 + ((rawVals[0] * 0.7 + rawVals[1] * 0.3) - 55) * 1.05));
-    const ast = Math.max(2, Math.round(4 + (rawVals[2] - 55) * 0.58));
-    const trp = titles * 3 + (seed % 4) + 1;
-    stats = [`${gls} Goals/Yr`, `${ast} Assists/Yr`, `${trp} Trophies`];
-  } else {
-    const slams = Math.max(0, Math.round((finalOvr - 85) * 1.5) + (clutch >= 96 ? 2 : 0));
-    const winPct = Math.min(91.5, Math.max(51.0, 50 + (finalOvr - 70) * 1.45)).toFixed(1);
-    const wks = Math.max(0, Math.round((finalOvr - 87) * 28));
-    titles = slams;
-    stats = [`${slams} Grand Slams`, `${winPct}% Win Rate`, `${wks} Wks at #1`];
-  }
-
   const bestIdx = rawVals.indexOf(Math.max(...rawVals));
   const worstIdx = rawVals.indexOf(Math.min(...rawVals));
   const attrs = lgCfg.attributes;
+
+  let primeStats = [];
+  let careerTotals = [];
+  let chronicleEvents = [];
+  let mainTitleLabel = "Major Titles / Rings";
+
+  // 1. BASKETBALL NARRATIVE
+  if (state.league.includes("Basketball")) {
+    const ppg = Math.max(8.5, (11.5 + ((rawVals[0] * 0.55 + rawVals[1] * 0.45) - 60) * 0.58)).toFixed(1);
+    const rpg = Math.max(2.8, (3.2 + (rawVals[4] - 55) * 0.25)).toFixed(1);
+    const apg = Math.max(2.0, (2.2 + (rawVals[2] - 55) * 0.24)).toFixed(1);
+    const careerPts = Math.round(parseFloat(ppg) * 74 * (12 + (seed % 6)));
+    const allNba = Math.max(0, Math.round((finalOvr - 81) * 0.85));
+
+    primeStats = [`${ppg} PPG`, `${rpg} RPG`, `${apg} APG`];
+    careerTotals = [`${careerPts.toLocaleString()} Pts`, `${allNba}x All-NBA`, `${titles}x NBA Rings`];
+    mainTitleLabel = "NBA Championships";
+
+    chronicleEvents = [
+      `<strong>Year 1 (Rookie Phenom):</strong> Entered the NBA profiled as a <em>${archetype}</em>, immediately flashing a ${rawVals[bestIdx]}-rated <strong>${attrs[bestIdx]}</strong> weapon on opening night.`,
+      `<strong>Year 5 (Peak Prime Season):</strong> Reached <strong>${finalOvr} OVR</strong>, averaging a dominant prime stat line of <strong>${ppg} PPG, ${rpg} RPG, and ${apg} APG</strong>.`,
+      `<strong>Year 9 (Playoff Legacy):</strong> ${
+        titles > 0
+          ? `Delivered a legendary ${clutch}-Clutch Finals takeover to capture <strong>${titles} NBA Championships</strong> and <strong>${mvps} League MVPs</strong>.`
+          : `Despite strong regular-season numbers, playoff opponents ruthlessly hunted their ${rawVals[worstIdx]}-rated <strong>${attrs[worstIdx]}</strong> in 7-game series.`
+      }`,
+      `<strong>Year 16 (Retirement & Springfield Verdict):</strong> Retired with <strong>${careerPts.toLocaleString()} career points</strong> and a <strong>${hof}</strong> Basketball Hall of Fame probability.`
+    ];
+  }
+  // 2. PRO FOOTBALL (QB) NARRATIVE
+  else if (state.league.includes("Football")) {
+    const passYds = Math.max(2100, Math.round(2850 + ((rawVals[0] * 0.45 + rawVals[1] * 0.35 + rawVals[3] * 0.2) - 60) * 62));
+    const rushYds = Math.max(45, Math.round((rawVals[2] - 48) * 19));
+    const totalTds = Math.max(12, Math.round(16 + ((rawVals[0] + rawVals[1] + rawVals[3] + rawVals[5]) / 4 - 60) * 0.88 + (rawVals[2] > 90 ? 5 : 0)));
+    const rating = Math.min(121.8, Math.max(68.4, 74.0 + (finalOvr - 72) * 1.62)).toFixed(1);
+    const seasons = 12 + (seed % 5);
+    const careerPassYds = passYds * seasons;
+    const careerTds = totalTds * seasons;
+
+    primeStats = [`${passYds.toLocaleString()} Pass Yds`, `${totalTds} Total TDs`, `${rating} Rating`];
+    careerTotals = [`${careerPassYds.toLocaleString()} Pass Yds`, `${careerTds} Career TDs`, `${titles}x Super Bowls`];
+    mainTitleLabel = "Super Bowl Rings";
+
+    chronicleEvents = [
+      `<strong>Year 1 (Franchise QB1):</strong> Drafted as a <em>${archetype}</em>, immediately wowing offensive coordinators with a ${rawVals[bestIdx]}-rated <strong>${attrs[bestIdx]}</strong>.`,
+      `<strong>Year 5 (All-Pro Peak):</strong> Peaked at <strong>${finalOvr} OVR</strong>, throwing for <strong>${passYds.toLocaleString()} yards</strong> (${rushYds} rush yds) with <strong>${totalTds} total TDs</strong> and a <strong>${rating} Passer Rating</strong>.`,
+      `<strong>Year 9 (January & Super Bowl Legacy):</strong> ${
+        titles > 0
+          ? `Engineered iconic ${clutch}-Clutch two-minute drills to hoist <strong>${titles} Lombardi Trophies</strong> and win <strong>${mvps} NFL MVPs</strong>.`
+          : `Defensive coordinatorsblitzed their ${rawVals[worstIdx]}-rated <strong>${attrs[worstIdx]}</strong> in divisional playoff heartbreaks.`
+      }`,
+      `<strong>Year 16 (Canton Gold Jacket Verdict):</strong> Hung up the cleats with <strong>${careerPassYds.toLocaleString()} passing yards</strong>, <strong>${careerTds} TDs</strong>, and a <strong>${hof}</strong> Hall of Fame probability.`
+    ];
+  }
+  // 3. WORLD SOCCER NARRATIVE
+  else if (state.league.includes("Soccer")) {
+    const gls = Math.max(3, Math.round(6 + ((rawVals[0] * 0.72 + rawVals[1] * 0.28) - 58) * 1.12));
+    const ast = Math.max(3, Math.round(5 + ((rawVals[2] * 0.7 + rawVals[1] * 0.3) - 58) * 0.62));
+    const ga90 = ((gls + ast) / 36).toFixed(2);
+    const careerGoals = gls * (13 + (seed % 5));
+    const majorTrophies = titles * 3 + (seed % 5) + 1;
+
+    primeStats = [`${gls} Goals / Season`, `${ast} Assists / Season`, `${ga90} G+A / 90`];
+    careerTotals = [`${careerGoals} Career Goals`, `${majorTrophies} Major Trophies`, `${mvps}x Ballon d'Or`];
+    mainTitleLabel = "UCL / World Cup Titles";
+
+    chronicleEvents = [
+      `<strong>Year 1 (Wonderkid Debut):</strong> Broke into the first team as a <em>${archetype}</em>, showcasing a world-class ${rawVals[bestIdx]}-rated <strong>${attrs[bestIdx]}</strong>.`,
+      `<strong>Year 5 (Ballon d'Or Prime):</strong> Reached <strong>${finalOvr} OVR</strong>, recording a prime campaign of <strong>${gls} goals and ${ast} assists</strong> (${ga90} G+A per 90) across all competitions.`,
+      `<strong>Year 9 (Champions League & International Glory):</strong> ${
+        titles > 0
+          ? `Scored decisive ${clutch}-Clutch knockout goals to lift <strong>${titles} UCL/World Cup crowns</strong> and <strong>${majorTrophies} total club trophies</strong>.`
+          : `Tactical opponents exploited their ${rawVals[worstIdx]}-rated <strong>${attrs[worstIdx]}</strong> in Champions League knockout ties.`
+      }`,
+      `<strong>Year 16 (Final Whistle Verdict):</strong> Retired with <strong>${careerGoals} career goals</strong>, <strong>${mvps} Ballon d'Ors</strong>, and a <strong>${hof}</strong> all-time legend status.`
+    ];
+  }
+  // 4. PRO TENNIS NARRATIVE (FIXED: No more "averaging 23 Grand Slams"!)
+  else {
+    const slams = Math.max(0, Math.round((finalOvr - 85) * 1.55) + (clutch >= 96 ? 2 : 0));
+    const winPct = Math.min(92.4, Math.max(52.0, 51 + (finalOvr - 70) * 1.42)).toFixed(1);
+    const primeSeasonTitles = Math.max(1, Math.min(11, Math.round((finalOvr - 78) * 0.48)));
+    const acesPerYr = Math.round(180 + (rawVals[2] - 55) * 22);
+    const weeksNo1 = finalOvr >= 90 ? Math.max(12, Math.round((finalOvr - 88) * 34) + (seed % 25)) : 0;
+    const careerTitles = Math.max(slams + 3, primeSeasonTitles * 9 + (seed % 14));
+    titles = slams;
+    mvps = Math.max(0, Math.round(weeksNo1 / 52));
+
+    primeStats = [`${winPct}% Match Win Rate`, `${primeSeasonTitles} Titles / Season`, `${acesPerYr} Aces / Season`];
+    careerTotals = [`${slams} Grand Slams`, `${weeksNo1} Wks at World #1`, `${careerTitles} Tour Titles`];
+    mainTitleLabel = "Grand Slam Singles Titles";
+
+    chronicleEvents = [
+      `<strong>Year 1 (ATP/WTA Tour Breakout):</strong> Turned pro as a <em>${archetype}</em>, blowing opponents off the court with a ${rawVals[bestIdx]}-rated <strong>${attrs[bestIdx]}</strong>.`,
+      `<strong>Year 5 (Peak Tour Dominance):</strong> Reached <strong>${finalOvr} OVR</strong>, posting a dominant prime season with a <strong>${winPct}% match win rate</strong>, <strong>${primeSeasonTitles} tour titles</strong>, and <strong>${acesPerYr} aces</strong>.`,
+      `<strong>Year 9 (Grand Slam Centre Court Legacy):</strong> ${
+        slams > 0
+          ? `Conquered 5-set Championship Sundays with ${clutch}-Clutch tiebreak nerve to capture <strong>${slams} career Grand Slam Singles Titles</strong> and spend <strong>${weeksNo1} weeks at World #1</strong>.`
+          : `Top seeds repeatedly targeted their ${rawVals[worstIdx]}-rated <strong>${attrs[worstIdx]}</strong> during second-week Grand Slam quarterfinals.`
+      }`,
+      `<strong>Year 15 (Newport Hall of Fame Verdict):</strong> Retired with <strong>${careerTitles} career tour titles</strong> (${slams} Majors) and a <strong>${hof}</strong> International Tennis Hall of Fame probability.`
+    ];
+  }
 
   const emojiRow = rawVals.map(v => v >= 95 ? "🟨" : (v >= 85 ? "🟦" : (v >= 75 ? "🟩" : "🟥"))).join("");
   const shareLines = [
     `⚡ PLAYER FORGE | ${state.league}`,
     `👤 ${state.prospectName} — ${finalOvr} OVR (${tier})`,
+    `🧬 Archetype: ${archetype}`,
     `📊 DNA: ${emojiRow}`,
     ...attrs.map((a, i) => `• ${a}: ${rawVals[i]} (${state.safeMode ? state.assignedSlots[i].safe : state.assignedSlots[i].name})`),
-    `🏆 Titles: ${titles} | HOF: ${hof}`
+    `🏆 ${mainTitleLabel}: ${titles} | HOF: ${hof}`
   ].join("\n");
 
   container.innerHTML = `
     <div class="bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border-2 border-indigo-500/60 rounded-2xl p-6 shadow-2xl">
       <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-5">
         <div>
-          <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-400">Career Simulation Complete</span>
+          <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-400">Career Simulation Complete • ${archetype}</span>
           <h2 class="text-2xl font-black text-white mt-0.5">🏆 ${state.prospectName} — ${finalOvr} OVR</h2>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -813,11 +1027,12 @@ function renderCareerSim() {
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
           <div class="text-xs text-slate-400">Legacy Tier</div>
           <div class="text-base font-black text-white mt-2">${tier}</div>
+          <div class="text-[11px] text-indigo-300">${archetype}</div>
         </div>
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
-          <div class="text-xs text-slate-400">Major Titles / Rings</div>
+          <div class="text-xs text-slate-400">${mainTitleLabel}</div>
           <div class="text-2xl font-black text-sky-400 mt-1">${titles}</div>
-          <div class="text-[11px] text-slate-400">${mvps}x League MVPs</div>
+          <div class="text-[11px] text-slate-400">${careerTotals[1]}</div>
         </div>
         <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 text-center">
           <div class="text-xs text-slate-400">Hall of Fame Probability</div>
@@ -825,19 +1040,31 @@ function renderCareerSim() {
         </div>
       </div>
 
-      <!-- Sport Specific Prime Averages -->
-      <div class="grid grid-cols-3 gap-3.5 mb-6">
+      <!-- Prime Season Stats vs Career Totals -->
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
         <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
-          <div class="text-[11px] text-slate-400 uppercase font-bold">${lgCfg.statLabels[0]}</div>
-          <div class="text-lg font-black text-white mt-0.5">${stats[0]}</div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">${lgCfg.primeStatLabels[0]}</div>
+          <div class="text-base font-black text-white mt-0.5">${primeStats[0]}</div>
         </div>
         <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
-          <div class="text-[11px] text-slate-400 uppercase font-bold">${lgCfg.statLabels[1]}</div>
-          <div class="text-lg font-black text-white mt-0.5">${stats[1]}</div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">${lgCfg.primeStatLabels[1]}</div>
+          <div class="text-base font-black text-white mt-0.5">${primeStats[1]}</div>
         </div>
         <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 text-center">
-          <div class="text-[11px] text-slate-400 uppercase font-bold">${lgCfg.statLabels[2]}</div>
-          <div class="text-lg font-black text-white mt-0.5">${stats[2]}</div>
+          <div class="text-[10px] text-slate-400 uppercase font-bold">${lgCfg.primeStatLabels[2]}</div>
+          <div class="text-base font-black text-white mt-0.5">${primeStats[2]}</div>
+        </div>
+        <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-3 text-center">
+          <div class="text-[10px] text-indigo-300 uppercase font-bold">${lgCfg.careerStatLabels[0]}</div>
+          <div class="text-base font-black text-indigo-200 mt-0.5">${careerTotals[0]}</div>
+        </div>
+        <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-3 text-center">
+          <div class="text-[10px] text-indigo-300 uppercase font-bold">${lgCfg.careerStatLabels[1]}</div>
+          <div class="text-base font-black text-indigo-200 mt-0.5">${careerTotals[1]}</div>
+        </div>
+        <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-3 text-center">
+          <div class="text-[10px] text-indigo-300 uppercase font-bold">${lgCfg.careerStatLabels[2]}</div>
+          <div class="text-base font-black text-indigo-200 mt-0.5">${careerTotals[2]}</div>
         </div>
       </div>
 
@@ -846,22 +1073,7 @@ function renderCareerSim() {
         <div>
           <h4 class="text-sm font-bold text-white mb-2.5">📜 Career Storyline Chronicle</h4>
           <ul class="space-y-2 text-xs text-slate-300 leading-relaxed">
-            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
-              <strong>Year 1 (Rookie Phenom):</strong> Entered the league with an immediate ${rawVals[bestIdx]}-rated <strong>${attrs[bestIdx]}</strong> weapon, stunning scouts on opening night.
-            </li>
-            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
-              <strong>Year 5 (Peak Prime):</strong> Reached <strong>${finalOvr} OVR</strong>, averaging <strong>${stats[0]}</strong> and <strong>${stats[1]}</strong> across a dominant decade.
-            </li>
-            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
-              <strong>Year 9 (Postseason Legacy):</strong> ${
-                titles > 0
-                  ? `Delivered a legendary ${clutch}-Clutch championship run to capture <strong>${titles} Major Titles</strong>.`
-                  : `Opponents schemed relentlessly against their ${rawVals[worstIdx]}-rated <strong>${attrs[worstIdx]}</strong> in deep playoff series.`
-              }
-            </li>
-            <li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">
-              <strong>Year 15 (Retirement Verdict):</strong> Hung up the jersey with a <strong>${hof}</strong> Hall of Fame probability as a <strong>${tier}</strong>.
-            </li>
+            ${chronicleEvents.map(ev => `<li class="bg-slate-900/70 border border-slate-800 p-2.5 rounded-lg">${ev}</li>`).join("")}
           </ul>
           <button onclick="saveBuildToHof(${finalOvr}, '${tier}', ${titles}, '${hof}')" class="mt-3 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow">
             🏛️ Save Build to Leaderboard
@@ -900,7 +1112,7 @@ function saveBuildToHof(ovr, tier, titles, hof) {
     date: new Date().toLocaleDateString()
   });
   state.leaderboard.sort((a, b) => b.ovr - a.ovr);
-  localStorage.setItem("pf_leaderboard_v2", JSON.stringify(state.leaderboard));
+  localStorage.setItem("pf_leaderboard_v3", JSON.stringify(state.leaderboard));
   document.getElementById("hofCount").textContent = state.leaderboard.length;
   switchMainView("hof");
 }
@@ -949,7 +1161,7 @@ function renderHof() {
         <span class="text-lg font-black text-indigo-400">#${i + 1}</span>
         <div>
           <div class="font-bold text-white text-sm">${item.name} <span class="text-xs text-slate-400">(${item.league})</span></div>
-          <div class="text-xs text-slate-400">${item.tier} • ${item.titles} Titles • HOF: ${item.hof}</div>
+          <div class="text-xs text-slate-400">${item.tier} • ${item.titles} Major Titles • HOF: ${item.hof}</div>
         </div>
       </div>
       <div class="text-xl font-black text-yellow-400">${item.ovr} OVR</div>
@@ -958,7 +1170,7 @@ function renderHof() {
 
 function clearLeaderboard() {
   state.leaderboard = [];
-  localStorage.removeItem("pf_leaderboard_v2");
+  localStorage.removeItem("pf_leaderboard_v3");
   renderHof();
   renderHeaderControls();
 }
